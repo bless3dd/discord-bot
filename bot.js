@@ -11,6 +11,7 @@ const client = new Client({
 // Token e Client ID del bot
 const TOKEN = process.env.TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
+const GUILD_ID = '1219541590620770334'; // ID del tuo server
 
 // Definizione dei comandi slash
 const commands = [
@@ -49,7 +50,7 @@ const rest = new REST({ version: '10' }).setToken(TOKEN);
         console.log('🔄 Registrazione comandi slash...');
         
         await rest.put(
-            Routes.applicationCommands(CLIENT_ID),
+            Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
             { body: commands }
         );
         
