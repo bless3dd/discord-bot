@@ -1,38 +1,49 @@
-const moderationCommands = require('../commands/moderation');
-const infoCommands = require('../commands/info');
-const funCommands = require('../commands/fun');
+const fs = require('fs');
+const path = require('path');
 
-module.exports = (client) => {
-    // Crea una mappa di tutti i comandi
-    const commands = new Map();
+// Carica tutti i comandi dinamicamente
+const commands = new Map();
+const commandsPath = path.join(__dirname, '..', 'commands');
+
+// Leggi tutti i file .js nella cartella commands
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+
+for (const file of commandFiles) {
+    const filePath = path.join(commandsPath, file);
+    const commandModule = require(filePath);
     
-    [...moderationCommands, ...infoCommands, ...funCommands].forEach(cmd => {
-        commands.set(cmd.data.name, cmd);
-    });
+    if (Array.isArray(commandModule)) {
+        commandModule.forEach(cmd => {
+            commands.set(cmd.data.name, cmd);
+        });
+    }
+}
 
-    // Gestisci l'esecuzione dei comandi
-    client.on('interactionCreate', async (interaction) => {
-        if (!interaction.isChatInputCommand()) return;
+module.exports = async (client, interaction) => {
+    if (!interaction.isCommand()) return;
 
-        const command = commands.get(interaction.commandName);
+    const command = commands.get(interaction.commandName);
 
-        if (!command) {
-            console.error(`Comando ${interaction.commandName} non trovato!`);
-            return;
+    if (!command) {
+        console.error(`Comando ${interaction.commandName} non trovato`);
+        return;
+    }
+
+    try {
+        await command.execute(interaction);
+    } catch (error) {
+        console.error('Errore durante l\'esecuzione del comando:', error);
+        
+        if (interaction.replied || interaction.deferred) {
+            await interaction.followUp({
+                content: '❌ Si è verificato un errore durante l\'esecuzione del comando!',
+                ephemeral: true
+            });
+        } else {
+            await interaction.reply({
+                content: '❌ Si è verificato un errore durante l\'esecuzione del comando!',
+                ephemeral: true
+            });
         }
-
-        try {
-            await command.execute(interaction);
-        } catch (error) {
-            console.error(`Errore nell'esecuzione del comando ${interaction.commandName}:`, error);
-            
-            const errorMessage = { content: '❌ Si è verificato un errore durante l\'esecuzione del comando!', ephemeral: true };
-            
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(errorMessage);
-            } else {
-                await interaction.reply(errorMessage);
-            }
-        }
-    });
+    }
 };
