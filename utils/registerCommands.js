@@ -1,12 +1,12 @@
 const { REST, Routes } = require('discord.js');
 const { CLIENT_ID, GUILD_ID, TOKEN } = require('../config');
-const moderationCommands = require('../commands/moderation');
-const infoCommands = require('../commands/info');
-const funCommands = require('../commands/fun');
+const moderationCommands = require('../commands/moderation.js');
+const infoCommands = require('../commands/info.js');
+const funCommands = require('../commands/fun.js');
 
 async function registerCommands(client) {
     try {
-        console.log('🔄 Registrazione comandi slash...');
+        console.log('📋 Registrazione comandi slash...');
 
         const commands = [
             ...moderationCommands.map(cmd => cmd.data.toJSON()),
