@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KyraBot - Discord Bot Privato</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .stars {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            animation: fadeInDown 1s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .bot-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: float 3s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+            border: 4px solid rgba(255,255,255,0.3);
+        }
+
+        .bot-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .status-indicator {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 4px solid white;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online {
+            background: #43b581;
+        }
+
+        .status-offline {
+            background: #747f8d;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        h1 {
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.3em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .status-text {
+            font-size: 1.1em;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            display: inline-block;
+            backdrop-filter: blur(10px);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 50px 0;
+        }
+
+        .feature-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            animation: fadeInUp 1s ease;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .feature-title {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .feature-description {
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .commands-section {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 50px 0;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .commands-section h2 {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .command-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .command-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .command-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+
+        .command-name {
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+
+        .command-desc {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            opacity: 0.8;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: rgba(255,255,255,0.1);
+            padding: 20px 40px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .stat-label {
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="container">
+        <header>
+            <div class="bot-avatar">
+                <img src="https://media.discordapp.net/attachments/1321974148917887008/1452750406001365075/avatar.gif" alt="KyraBot Avatar">
+                <div class="status-indicator status-online" id="statusIndicator"></div>
+            </div>
+            <h1>KyraBot</h1>
+            <p class="subtitle">Bot Discord Privato di Moderazione e Gestione</p>
+            <p class="status-text" id="statusText">🟢 Online</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number">1</div>
+                <div class="stat-label">Server</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="userCount">60</div>
+                <div class="stat-label">Utenti</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">15+</div>
+                <div class="stat-label">Comandi</div>
+            </div>
+        </div>
+
+        <div class="features">
+            <div class="feature-card" style="animation-delay: 0.1s">
+                <div class="feature-icon">🛡️</div>
+                <div class="feature-title">Moderazione Avanzata</div>
+                <div class="feature-description">
+                    Sistema completo di moderazione con ban, kick, timeout, warn e gestione avvertimenti. Proteggi il tuo server con facilità.
+                </div>
+            </div>
+
+            <div class="feature-card" style="animation-delay: 0.2s">
+                <div class="feature-icon">🎤</div>
+                <div class="feature-title">Voice Tracking</div>
+                <div class="feature-description">
+                    Monitoraggio in tempo reale degli utenti nei canali vocali. Il bot mostra quanti utenti sono attualmente in voice chat.
+                </div>
+            </div>
+
+            <div class="feature-card" style="animation-delay: 0.3s">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">Informazioni Server</div>
+                <div class="feature-description">
+                    Visualizza statistiche dettagliate del server e informazioni sugli utenti con comandi dedicati.
+                </div>
+            </div>
+
+            <div class="feature-card" style="animation-delay: 0.4s">
+                <div class="feature-icon">🎮</div>
+                <div class="feature-title">Utilità & Fun</div>
+                <div class="feature-description">
+                    Sondaggi, 8ball magica, avatar viewer e altre funzionalità divertenti per intrattenere la community.
+                </div>
+            </div>
+
+            <div class="feature-card" style="animation-delay: 0.5s">
+                <div class="feature-icon">💬</div>
+                <div class="feature-title">Gestione Messaggi</div>
+                <div class="feature-description">
+                    Pulizia messaggi bulk, slow mode, e controllo completo sui canali testuali del server.
+                </div>
+            </div>
+
+            <div class="feature-card" style="animation-delay: 0.6s">
+                <div class="feature-icon">👋</div>
+                <div class="feature-title">Benvenuto & Addio</div>
+                <div class="feature-description">
+                    Messaggi automatici di benvenuto per i nuovi membri e notifiche quando qualcuno lascia il server.
+                </div>
+            </div>
+        </div>
+
+        <div class="commands-section">
+            <h2>📋 Comandi Disponibili</h2>
+            <div class="command-grid">
+                <div class="command-item">
+                    <div class="command-name">/ping</div>
+                    <div class="command-desc">Controlla la latenza del bot</div>
+                </div>
+                <div class="command-item">
+                    <div class="command-name">/help</div>
+                    <div class="command-desc">Mostra tutti i comandi disponibili</div>
+                </div>
+                <div class="command-item">
+                    <div class="command-name">/ban</div>
+                    <div class="command-desc">Banna un utente dal server</div>
+                </div>
+                <div class="command-item">
+                    <div class="command-name">/unban</div>
+                    <div class="command-desc">Rimuove il ban a un utente</div>
+                </div>
+                <div class="command-item">
+                    <div class="command-name">/kick</div>
+                    <div class="command-desc">Espelle un utente dal server</div>
+                </div>
+                <div class="command-item">
+                    <div class="command-name">/timeout</div>
+                    <div class="command-desc">Mette in timeout un utente</div>
+                </div>
+                <div class="command-item">
+                    <div class="command-name">/warn</div>
+                    <div class="command-desc">Avverte un utente</div>
+                </div>
+                <div class="command-item">
+                    <div class="command-name">/warnings</div>
+                    <div class="command-desc">Visualizza gli avvertimenti</div>
+                </div>
+                <div class="command-item">
+                    <div class="command-name">/clear</div>
+                    <div class="command-desc">Elimina messaggi in bulk</div>
+                </div>
+                <div class="command-item">
+                    <div class="command-name">/slowmode</div>
+                    <div class="command-desc">Imposta la modalità lenta</div>
+                </div>
+                <div class="command-item">
+                    <div class="command-name">/poll</div>
+                    <div class="command-desc">Crea un sondaggio</div>
+                </div>
+                <div class="command-item">
+                    <div class="command-name">/8ball</div>
+                    <div class="command-desc">Consulta la palla magica</div>
+                </div>
+                <div class="command-item">
+                    <div class="command-name">/say</div>
+                    <div class="command-desc">Fai ripetere un messaggio al bot</div>
+                </div>
+                <div class="command-item">
+                    <div class="command-name">/userinfo</div>
+                    <div class="command-desc">Info su un utente</div>
+                </div>
+                <div class="command-item">
+                    <div class="command-name">/serverinfo</div>
+                    <div class="command-desc">Info sul server</div>
+                </div>
+                <div class="command-item">
+                    <div class="command-name">/avatar</div>
+                    <div class="command-desc">Mostra l'avatar di un utente</div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>🤖 KyraBot - Bot Discord Privato</p>
+            <p style="margin-top: 10px; opacity: 0.7;">Sviluppato con ❤️ per la gestione del server</p>
+        </footer>
+    </div>
+
+    <script>
+        // Genera stelle animate
+        const starsContainer = document.getElementById('stars');
+        for (let i = 0; i < 100; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 3 + 's';
+            starsContainer.appendChild(star);
+        }
+
+        // Simula controllo status bot (puoi integrare con API reale)
+        function checkBotStatus() {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            
+            // Simula status online (sostituisci con chiamata API reale se necessario)
+            const isOnline = true;
+            
+            if (isOnline) {
+                statusIndicator.className = 'status-indicator status-online';
+                statusText.innerHTML = '🟢 Online';
+            } else {
+                statusIndicator.className = 'status-indicator status-offline';
+                statusText.innerHTML = '🔴 Offline';
+            }
+        }
+
+        // Controlla status all'avvio
+        checkBotStatus();
+        
+        // Aggiorna status ogni 30 secondi
+        setInterval(checkBotStatus, 30000);
+
+        // Animazione numeri stats
+        function animateNumber(element, target) {
+            let current = 0;
+            const increment = target / 50;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    element.textContent = target;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current);
+                }
+            }, 20);
+        }
+
+        // Anima il contatore utenti
+        const userCountElement = document.getElementById('userCount');
+        animateNumber(userCountElement, 60);
+    </script>
+</body>
+</html>
