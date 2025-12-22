@@ -10,6 +10,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 app.use(cors()); // Permette al sito di leggere l'API
+app.use(express.json());
 
 // ========================================
 // CLIENT DISCORD
@@ -28,10 +29,102 @@ const client = new Client({
 
 client.commands = new Collection();
 
-console.log('🚀 Avvio del bot...');
+// ========================================
+// API ENDPOINT PER STATISTICHE
+// ========================================
+app.get('/api/stats', (req, res) => {
+    try {
+        // Verifica che il bot sia pronto
+        if (!client.isReady()) {
+            return res.status(200).json({
+                online: false,
+                message: 'Bot is starting or offline',
+                servers: 0,
+                users: 0,
+                commands: 0,
+                ping: 0,
+                uptime: 0
+            });
+        }
+
+        // Conta utenti totali da tutti i server
+        const totalUsers = client.guilds.cache.reduce((acc, guild) => {
+            return acc + guild.memberCount;
+        }, 0);
+
+        // Conta comandi disponibili
+        const commandCount = client.commands.size || 16;
+
+        res.status(200).json({
+            online: true,
+            servers: client.guilds.cache.size,
+            users: totalUsers,
+            commands: commandCount,
+            ping: client.ws.ping,
+            uptime: Math.floor(client.uptime / 1000)
+        });
+    } catch (error) {
+        console.error('❌ Errore API /api/stats:', error);
+        res.status(200).json({
+            online: false,
+            error: error.message,
+            servers: 0,
+            users: 0,
+            commands: 0,
+            ping: 0,
+            uptime: 0
+        });
+    }
+});
+
+// Endpoint homepage
+app.get('/', (req, res) => {
+    res.status(200).send('✅ KyraBot API is running! Visit /api/stats for statistics.');
+});
+
+// Endpoint di health check (CRITICO PER RAILWAY)
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'ok',
+        server_running: true,
+        bot_ready: client.isReady(),
+        timestamp: new Date().toISOString()
+    });
+});
+
+// ========================================
+// AVVIA IL SERVER API SUBITO (PRIORITÀ)
+// ========================================
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🔡 API Stats attiva su porta ${PORT}`);
+    console.log(`🌐 Server HTTP pronto - Railway può connettersi`);
+    console.log(`📊 Endpoint disponibili:`);
+    console.log(`   - GET / (homepage)`);
+    console.log(`   - GET /health (health check)`);
+    console.log(`   - GET /api/stats (statistiche bot)`);
+});
+
+// Gestione errori del server
+server.on('error', (error) => {
+    console.error('❌ Errore critico server Express:', error);
+    if (error.code === 'EADDRINUSE') {
+        console.error(`❌ Porta ${PORT} già in uso!`);
+    }
+});
+
+// ========================================
+// CARICAMENTO BOT DISCORD (DOPO IL SERVER)
+// ========================================
+console.log('🚀 Avvio del bot Discord...');
 
 // Carica gli event handlers standard
-eventHandler(client);
+try {
+    eventHandler(client);
+    console.log('✅ Event handlers caricati');
+} catch (error) {
+    console.error('⚠️ Errore caricamento event handlers:', error);
+}
 
 // Carica manualmente il voice status updater
 try {
@@ -58,119 +151,93 @@ try {
         console.log('📢 Interazione ricevuta in index.js');
         await commandHandler(interaction);
     });
+    console.log('✅ Command Handler registrato');
 } catch (error) {
     console.log('⚠️ Command Handler non trovato, skip...');
 }
 
 // ========================================
-// API ENDPOINT PER STATISTICHE
-// ========================================
-app.get('/api/stats', (req, res) => {
-    try {
-        // Verifica che il bot sia pronto
-        if (!client.isReady()) {
-            return res.status(503).json({
-                online: false,
-                error: 'Bot is starting...',
-                servers: 0,
-                users: 0,
-                commands: 0,
-                ping: 0,
-                uptime: 0
-            });
-        }
-
-        // Conta utenti totali da tutti i server
-        const totalUsers = client.guilds.cache.reduce((acc, guild) => {
-            return acc + guild.memberCount;
-        }, 0);
-
-        // Conta comandi disponibili
-        const commandCount = client.commands.size || 16;
-
-        res.json({
-            online: true,
-            servers: client.guilds.cache.size,
-            users: totalUsers,
-            commands: commandCount,
-            ping: client.ws.ping,
-            uptime: Math.floor(client.uptime / 1000)
-        });
-    } catch (error) {
-        console.error('❌ Errore API /api/stats:', error);
-        res.status(500).json({
-            online: false,
-            error: error.message,
-            servers: 0,
-            users: 0,
-            commands: 0,
-            ping: 0,
-            uptime: 0
-        });
-    }
-});
-
-// Endpoint homepage
-app.get('/', (req, res) => {
-    res.send('✅ KyraBot API is running! Visit /api/stats for statistics.');
-});
-
-// Endpoint di health check
-app.get('/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        bot_ready: client.isReady(),
-        timestamp: new Date().toISOString()
-    });
-});
-
-// Avvia il server API
-const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`📡 API Stats attiva su porta ${PORT}`);
-    console.log(`🌐 API disponibile su /api/stats`);
-});
-
-// Gestione errori del server
-server.on('error', (error) => {
-    console.error('❌ Errore server Express:', error);
-});
-
-// ========================================
-// LOGIN DEL BOT
+// LOGIN DEL BOT DISCORD
 // ========================================
 client.login(TOKEN)
     .then(() => {
-        console.log('🔐 Login effettuato con successo!');
+        console.log('🔐 Login Discord effettuato con successo!');
     })
     .catch(error => {
-        console.error('❌ Errore durante il login:', error);
-        process.exit(1);
+        console.error('❌ ERRORE LOGIN DISCORD:', error);
+        console.error('⚠️ Verifica che il TOKEN sia corretto nelle variabili Railway');
+        console.log('ℹ️ API continuerà a funzionare anche senza bot attivo');
+        // NON TERMINARE IL PROCESSO - Railway ha bisogno che il server resti attivo
     });
 
 // Event quando il bot è pronto
 client.once('ready', () => {
-    console.log(`✅ Bot online come ${client.user.tag}`);
-    console.log(`📊 Server: ${client.guilds.cache.size}`);
+    console.log('='.repeat(50));
+    console.log(`✅ BOT DISCORD ONLINE`);
+    console.log(`👤 Username: ${client.user.tag}`);
+    console.log(`🆔 ID: ${client.user.id}`);
+    console.log(`🔢 Server: ${client.guilds.cache.size}`);
     console.log(`👥 Utenti: ${client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0)}`);
+    console.log(`⚡ Comandi: ${client.commands.size || 16}`);
+    console.log('='.repeat(50));
 });
 
 // Gestione errori del client Discord
 client.on('error', error => {
     console.error('❌ Errore Discord Client:', error);
+    // Non terminare il processo - lascia il server API attivo
 });
 
-// Graceful shutdown
-process.on('SIGINT', () => {
-    console.log('🛑 Arresto del bot...');
-    client.destroy();
-    server.close();
-    process.exit(0);
+// Gestione warning Discord
+client.on('warn', info => {
+    console.warn('⚠️ Discord Warning:', info);
 });
 
-process.on('SIGTERM', () => {
-    console.log('🛑 Arresto del bot...');
-    client.destroy();
-    server.close();
-    process.exit(0);
+// Gestione disconnessioni Discord
+client.on('shardDisconnect', (event, id) => {
+    console.warn(`⚠️ Shard ${id} disconnesso:`, event);
 });
+
+client.on('shardReconnecting', (id) => {
+    console.log(`🔄 Shard ${id} riconnessione in corso...`);
+});
+
+// ========================================
+// GRACEFUL SHUTDOWN
+// ========================================
+const gracefulShutdown = (signal) => {
+    console.log(`\n🛑 Ricevuto segnale ${signal} - Arresto graceful...`);
+    
+    // Chiudi il server HTTP
+    server.close(() => {
+        console.log('✅ Server HTTP chiuso');
+    });
+    
+    // Disconnetti il bot Discord
+    if (client.isReady()) {
+        client.destroy();
+        console.log('✅ Bot Discord disconnesso');
+    }
+    
+    // Attendi 2 secondi e poi termina
+    setTimeout(() => {
+        console.log('👋 Shutdown completato');
+        process.exit(0);
+    }, 2000);
+};
+
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
+// Gestione errori non catturati (evita crash completo)
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+    // Non terminare il processo - logga solo l'errore
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught Exception:', error);
+    // Non terminare il processo - logga solo l'errore
+});
+
+console.log('✅ Index.js completamente caricato - In attesa eventi...');
