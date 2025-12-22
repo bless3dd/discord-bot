@@ -713,4 +713,102 @@ client.on('interactionCreate', async (interaction) => {
                 { name: 'Membri', value: `${guild.memberCount}`, inline: true },
                 { name: 'Creato', value: `<t:${Math.floor(guild.createdTimestamp / 1000)}:R>` },
                 { name: 'Canali', value: `${guild.channels.cache.size}`, inline: true },
-                { name: 'Ruoli', value: `${guil
+                { name: 'Ruoli', value: `{ name: 'Ruoli', value: `${guild.roles.cache.size}`, inline: true }
+            );
+
+        await interaction.reply({ embeds: [embed] });
+    }
+
+    // AVATAR
+    if (commandName === 'avatar') {
+        const user = interaction.options.getUser('utente') || interaction.user;
+
+        const embed = new EmbedBuilder()
+            .setColor('#0099ff')
+            .setTitle(`🖼️ Avatar di ${user.tag}`)
+            .setImage(user.displayAvatarURL({ dynamic: true, size: 512 }));
+
+        await interaction.reply({ embeds: [embed] });
+    }
+
+    // PING
+    if (commandName === 'ping') {
+        const ping = client.ws.ping;
+        await interaction.reply(`🏓 Pong! Latenza: ${ping}ms`);
+    }
+
+    // POLL
+    if (commandName === 'poll') {
+        const question = interaction.options.getString('domanda');
+        const options = interaction.options.getString('opzioni').split(',').map(opt => opt.trim()).slice(0, 10);
+
+        if (options.length < 2) {
+            return interaction.reply({ content: '❌ Servono almeno 2 opzioni!', ephemeral: true });
+        }
+
+        const embed = new EmbedBuilder()
+            .setColor('#0099ff')
+            .setTitle('📊 Sondaggio')
+            .setDescription(question)
+            .addFields(options.map((opt, i) => ({ name: `${i + 1}️⃣`, value: opt, inline: true })))
+            .setFooter({ text: `Sondaggio di ${interaction.user.tag}` });
+
+        const msg = await interaction.reply({ embeds: [embed], fetchReply: true });
+
+        const emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+        for (let i = 0; i < options.length; i++) {
+            await msg.react(emojis[i]);
+        }
+    }
+
+    // 8BALL
+    if (commandName === '8ball') {
+        const question = interaction.options.getString('domanda');
+        const answers = [
+            '✅ Sì', '❌ No', '🤔 Forse', '🎯 Certamente',
+            '⛔ Assolutamente no', '🔮 Riprova più tardi',
+            '💯 Sicuramente', '❓ Non posso prevederlo',
+            '✨ Molto probabile', '🚫 Non ci contare'
+        ];
+
+        const answer = answers[Math.floor(Math.random() * answers.length)];
+
+        const embed = new EmbedBuilder()
+            .setColor('#9b59b6')
+            .setTitle('🎱 Palla Magica 8')
+            .addFields(
+                { name: 'Domanda', value: question },
+                { name: 'Risposta', value: answer }
+            );
+
+        await interaction.reply({ embeds: [embed] });
+    }
+
+    // SAY
+    if (commandName === 'say') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
+            return interaction.reply({ content: '❌ Non hai i permessi!', ephemeral: true });
+        }
+
+        const message = interaction.options.getString('messaggio');
+        await interaction.channel.send(message);
+        await interaction.reply({ content: '✅ Messaggio inviato!', ephemeral: true });
+    }
+
+    // HELP
+    if (commandName === 'help') {
+        const embed = new EmbedBuilder()
+            .setColor('#0099ff')
+            .setTitle('📚 Comandi Disponibili')
+            .addFields(
+                { name: '⚔️ Moderazione', value: '`/ban` `/unban` `/kick` `/timeout` `/warn` `/warnings` `/clear` `/slowmode`' },
+                { name: 'ℹ️ Informativi', value: '`/userinfo` `/serverinfo` `/avatar` `/ping`' },
+                { name: '🎮 Fun', value: '`/poll` `/8ball` `/say`' }
+            )
+            .setFooter({ text: 'Usa /comando per vedere i dettagli' });
+
+        await interaction.reply({ embeds: [embed] });
+    }
+});
+
+client.login(TOKEN);
