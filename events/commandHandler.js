@@ -8,6 +8,8 @@ const commandsPath = path.join(__dirname, '..', 'commands');
 // Leggi tutti i file .js nella cartella commands
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
+console.log('📂 Caricamento comandi da commandHandler...');
+
 for (const file of commandFiles) {
     const filePath = path.join(commandsPath, file);
     const commandModule = require(filePath);
@@ -15,11 +17,12 @@ for (const file of commandFiles) {
     if (Array.isArray(commandModule)) {
         commandModule.forEach(cmd => {
             commands.set(cmd.data.name, cmd);
+            console.log(`✅ Comando caricato: ${cmd.data.name}`);
         });
     }
 }
 
-module.exports = async (client, interaction) => {
+module.exports = async (interaction) => {
     if (!interaction.isCommand()) return;
 
     const command = commands.get(interaction.commandName);
