@@ -23,30 +23,45 @@ for (const file of commandFiles) {
 }
 
 module.exports = async (interaction) => {
-    if (!interaction.isCommand()) return;
+    console.log('🔔 Interazione ricevuta:', interaction.type);
+    
+    if (!interaction.isCommand()) {
+        console.log('❌ Non è un comando');
+        return;
+    }
+
+    console.log('📝 Comando richiesto:', interaction.commandName);
 
     const command = commands.get(interaction.commandName);
 
     if (!command) {
-        console.error(`Comando ${interaction.commandName} non trovato`);
+        console.error(`❌ Comando ${interaction.commandName} non trovato nella mappa`);
+        console.log('Comandi disponibili:', Array.from(commands.keys()));
         return;
     }
 
+    console.log('✅ Comando trovato, esecuzione...');
+
     try {
         await command.execute(interaction);
+        console.log('✅ Comando eseguito con successo');
     } catch (error) {
-        console.error('Errore durante l\'esecuzione del comando:', error);
+        console.error('❌ Errore durante l\'esecuzione del comando:', error);
         
-        if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({
-                content: '❌ Si è verificato un errore durante l\'esecuzione del comando!',
-                ephemeral: true
-            });
-        } else {
-            await interaction.reply({
-                content: '❌ Si è verificato un errore durante l\'esecuzione del comando!',
-                ephemeral: true
-            });
+        try {
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp({
+                    content: '❌ Si è verificato un errore durante l\'esecuzione del comando!',
+                    ephemeral: true
+                });
+            } else {
+                await interaction.reply({
+                    content: '❌ Si è verificato un errore durante l\'esecuzione del comando!',
+                    ephemeral: true
+                });
+            }
+        } catch (replyError) {
+            console.error('❌ Errore anche nel rispondere:', replyError);
         }
     }
 };
