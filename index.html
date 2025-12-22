@@ -357,7 +357,7 @@
             font-weight: 600;
         }
 
-        /* Features con card magnetiche */
+        /* Features */
         .features {
             position: relative;
             z-index: 10;
@@ -440,7 +440,7 @@
             font-size: 1.1rem;
         }
 
-        /* Commands Section futuristica */
+        /* Commands Section */
         .commands {
             position: relative;
             z-index: 10;
@@ -630,7 +630,7 @@
         </div>
         <div class="status">
             <div class="status-dot"></div>
-            <span>Online</span>
+            <span>Caricamento...</span>
         </div>
     </header>
 
@@ -647,15 +647,15 @@
     <!-- Stats -->
     <section class="stats">
         <div class="stat-card">
-            <div class="stat-number" data-target="1">0</div>
+            <div class="stat-number" data-target="0">0</div>
             <div class="stat-label">Server Attivi</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number" data-target="60">0</div>
+            <div class="stat-number" data-target="0">0</div>
             <div class="stat-label">Utenti Attivi</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number" data-target="15">0</div>
+            <div class="stat-number" data-target="0">0</div>
             <div class="stat-label">Comandi</div>
         </div>
     </section>
@@ -778,7 +778,78 @@
     <div class="scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</div>
 
     <script>
-        // Custom cursor
+        // ========================================
+        // CONFIGURAZIONE API
+        // ========================================
+        const API_URL = 'https://tuo-dominio.up.railway.app/api/stats'; // ⚠️ SOSTITUISCI CON IL TUO URL RAILWAY!
+
+        // ========================================
+        // CARICAMENTO STATS DA API
+        // ========================================
+        async function loadStats() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                
+                // Aggiorna status nell'header
+                const statusDot = document.querySelector('.status-dot');
+                const statusText = document.querySelector('.status span');
+                
+                if (data.online) {
+                    statusDot.style.background = '#10b981';
+                    statusDot.style.boxShadow = '0 0 20px #10b981';
+                    statusText.textContent = 'Online';
+                } else {
+                    statusDot.style.background = '#ef4444';
+                    statusDot.style.boxShadow = '0 0 20px #ef4444';
+                    statusText.textContent = 'Offline';
+                }
+                
+                // Aggiorna numeri nelle stat cards
+                const statNumbers = document.querySelectorAll('.stat-number');
+                statNumbers[0].dataset.target = data.servers || 0;
+                statNumbers[1].dataset.target = data.users || 0;
+                statNumbers[2].dataset.target = data.commands || 0;
+                
+                // Anima i contatori
+                statNumbers.forEach(animateCounter);
+                
+                console.log('✅ Stats caricate:', data);
+                
+            } catch (error) {
+                console.error('❌ Errore caricamento stats:', error);
+                
+                const statusDot = document.querySelector('.status-dot');
+                const statusText = document.querySelector('.status span');
+                statusDot.style.background = '#ef4444';
+                statusDot.style.boxShadow = '0 0 20px #ef4444';
+                statusText.textContent = 'Connessione fallita';
+            }
+        }
+
+        // ========================================
+        // ANIMAZIONE CONTATORI
+        // ========================================
+        function animateCounter(element) {
+            const target = parseInt(element.dataset.target) || 0;
+            const duration = 2000;
+            const step = target / (duration / 16);
+            let current = 0;
+
+            const counter = setInterval(() => {
+                current += step;
+                if (current >= target) {
+                    element.textContent = target;
+                    clearInterval(counter);
+                } else {
+                    element.textContent = Math.floor(current);
+                }
+            }, 16);
+        }
+
+        // ========================================
+        // CUSTOM CURSOR
+        // ========================================
         const cursor = document.querySelector('.cursor');
         const cursorFollower = document.querySelector('.cursor-follower');
 
@@ -804,7 +875,9 @@
             });
         });
 
-        // Magnetic effect for feature cards
+        // ========================================
+        // MAGNETIC EFFECT PER FEATURE CARDS
+        // ========================================
         document.querySelectorAll('.feature-card').forEach(card => {
             card.addEventListener('mousemove', (e) => {
                 const rect = card.getBoundingClientRect();
@@ -816,29 +889,30 @@
             });
         });
 
-        // Counter animation
-        const animateCounter = (element) => {
-            const target = parseInt(element.dataset.target);
-            const duration = 2000;
-            const step = target / (duration / 16);
-            let current = 0;
+        // ========================================
+        // SCROLL TO TOP BUTTON
+        // ========================================
+        const scrollTopBtn = document.querySelector('.scroll-top');
 
-            const counter = setInterval(() => {
-                current += step;
-                if (current >= target) {
-                    element.textContent = target + (target === 15 ? '+' : '');
-                    clearInterval(counter);
-                } else {
-                    element.textContent = Math.floor(current);
-                }
-            }, 16);
-        };
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                scrollTopBtn.classList.add('visible');
+            } else {
+                scrollTopBtn.classList.remove('visible');
+            }
+        });
 
-        // Intersection Observer for animations
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    if (entry.target.classList.contains('stat-number')) {
-                        animateCounter(entry.target);
-                    }
-                    entry.target.style.opacity = '1';
+        // ========================================
+        // INIZIALIZZAZIONE
+        // ========================================
+        // Carica stats all'avvio
+        loadStats();
+
+        // Aggiorna stats ogni 30 secondi
+        setInterval(loadStats, 30000);
+
+        console.log('🚀 KyraBot Website caricato!');
+        console.log('📡 Stats URL:', API_URL);
+    </script>
+</body>
+</html>
