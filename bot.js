@@ -5,7 +5,8 @@ const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildMessages
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildVoiceStates
     ]
 });
 
@@ -198,7 +199,29 @@ const rest = new REST({ version: '10' }).setToken(TOKEN);
 
 client.once('ready', () => {
     console.log(`✅ Bot online come ${client.user.tag}`);
-    client.user.setActivity('/help per aiuto', { type: 3 });
+    updateVoiceStatus();
+    // Aggiorna lo status ogni 30 secondi
+    setInterval(updateVoiceStatus, 30000);
+});
+
+// Funzione per contare membri in vocale
+function updateVoiceStatus() {
+    const guild = client.guilds.cache.get(GUILD_ID);
+    if (!guild) return;
+
+    let voiceCount = 0;
+    guild.channels.cache.forEach(channel => {
+        if (channel.isVoiceBased()) {
+            voiceCount += channel.members.size;
+        }
+    });
+
+    client.user.setActivity(`${voiceCount} in vocale`, { type: 3 }); // type 3 = WATCHING
+}
+
+// Aggiorna quando qualcuno entra/esce dalle vocali
+client.on('voiceStateUpdate', () => {
+    updateVoiceStatus();
 });
 
 // Sistema automatico di scambio ruoli
