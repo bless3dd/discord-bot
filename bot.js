@@ -9,6 +9,10 @@ const client = new Client({
     ]
 });
 
+// Sistema di ruoli automatici
+const ROLE_VERIFICATO = '1397004446365384835';
+const ROLE_NON_VERIFICATO = '1447612498562777231';
+
 // Token e Client ID del bot
 const TOKEN = process.env.TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
@@ -195,6 +199,28 @@ const rest = new REST({ version: '10' }).setToken(TOKEN);
 client.once('ready', () => {
     console.log(`✅ Bot online come ${client.user.tag}`);
     client.user.setActivity('/help per aiuto', { type: 3 });
+});
+
+// Sistema automatico di scambio ruoli
+client.on('guildMemberUpdate', async (oldMember, newMember) => {
+    const oldRoles = oldMember.roles.cache;
+    const newRoles = newMember.roles.cache;
+
+    // Trova i ruoli aggiunti
+    const addedRoles = newRoles.filter(role => !oldRoles.has(role.id));
+
+    // Se è stato aggiunto il ruolo "Verificato"
+    if (addedRoles.has(ROLE_VERIFICATO)) {
+        // Togli il ruolo "Non Verificato" se ce l'ha
+        if (newMember.roles.cache.has(ROLE_NON_VERIFICATO)) {
+            try {
+                await newMember.roles.remove(ROLE_NON_VERIFICATO);
+                console.log(`✅ Rimosso ruolo "Non Verificato" da ${newMember.user.tag}`);
+            } catch (error) {
+                console.error('Errore nella rimozione del ruolo:', error);
+            }
+        }
+    }
 });
 
 client.on('interactionCreate', async (interaction) => {
