@@ -713,11 +713,8 @@ client.on('interactionCreate', async (interaction) => {
                 { name: 'Membri', value: `${guild.memberCount}`, inline: true },
                 { name: 'Creato', value: `<t:${Math.floor(guild.createdTimestamp / 1000)}:R>` },
                 { name: 'Canali', value: `${guild.channels.cache.size}`, inline: true },
-                { name: 'Ruoli', value: `{ name: 'Ruoli', value: `${guild.roles.cache.size}`, inline: true }
-            );
-
-        await interaction.reply({ embeds: [embed] });
-    }
+                { name: 'Ruoli', value: `${guild.roles.cache.size}`, inline: true }
+    
 
     // AVATAR
     if (commandName === 'avatar') {
