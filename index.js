@@ -10,7 +10,8 @@ const client = new Client({
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildModeration,
-        GatewayIntentBits.GuildPresences
+        GatewayIntentBits.GuildPresences,
+        GatewayIntentBits.GuildVoiceStates  // ← Aggiunto questo!
     ]
 });
 
@@ -23,7 +24,7 @@ eventHandler(client);
 const commandHandler = require('./events/commandHandler');
 
 client.on('interactionCreate', async (interaction) => {
-    console.log('🔔 Interazione ricevuta in index.js');
+    console.log('📢 Interazione ricevuta in index.js');
     await commandHandler(interaction);
 });
 
