@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, PermissionFlagsBits, EmbedBuilder, REST, Routes, SlashCommandBuilder, ChannelType } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionFlagsBits, EmbedBuilder, REST, Routes, SlashCommandBuilder, ChannelType, AuditLogEvent } = require('discord.js');
 
 // Configurazione del bot
 const client = new Client({
@@ -6,13 +6,17 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.GuildVoiceStates
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildModeration
     ]
 });
 
 // Sistema di ruoli automatici
 const ROLE_VERIFICATO = '1397004446365384835';
 const ROLE_NON_VERIFICATO = '1447612498562777231';
+
+// Canale per i log
+const LOG_CHANNEL_ID = '1452627029030731899';
 
 // Token e Client ID del bot
 const TOKEN = process.env.TOKEN;
@@ -21,6 +25,18 @@ const GUILD_ID = '1219541590620770334';
 
 // Sistema di warnings (in memoria)
 const warnings = new Map();
+
+// Funzione per inviare log
+async function sendLog(embed) {
+    try {
+        const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
+        if (logChannel) {
+            await logChannel.send({ embeds: [embed] });
+        }
+    } catch (error) {
+        console.error('Errore nell\'invio del log:', error);
+    }
+}
 
 // Definizione dei comandi slash
 const commands = [
@@ -144,6 +160,10 @@ const commands = [
                 .setDescription('L\'utente di cui vedere l\'avatar')
                 .setRequired(false)),
 
+    new SlashCommandBuilder()
+        .setName('ping')
+        .setDescription('Mostra la latenza del bot'),
+
     // FUN
     new SlashCommandBuilder()
         .setName('poll')
@@ -184,7 +204,7 @@ const rest = new REST({ version: '10' }).setToken(TOKEN);
 
 (async () => {
     try {
-        console.log('🔄 Registrazione comandi slash...');
+        console.log('📄 Registrazione comandi slash...');
         
         await rest.put(
             Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
@@ -199,38 +219,79 @@ const rest = new REST({ version: '10' }).setToken(TOKEN);
 
 client.once('ready', () => {
     console.log(`✅ Bot online come ${client.user.tag}`);
-    updateVoiceStatus();
-    // Aggiorna lo status ogni 30 secondi
-    setInterval(updateVoiceStatus, 30000);
+    client.user.setActivity('/help per aiuto', { type: 3 });
 });
 
-// Funzione per contare membri in vocale
-function updateVoiceStatus() {
-    const guild = client.guilds.cache.get(GUILD_ID);
-    if (!guild) return;
-
-    let voiceCount = 0;
-    guild.channels.cache.forEach(channel => {
-        if (channel.isVoiceBased()) {
-            voiceCount += channel.members.size;
-        }
-    });
-
-    client.user.setActivity(`${voiceCount} in vocale`, { type: 3 }); // type 3 = WATCHING
-}
-
-// Aggiorna quando qualcuno entra/esce dalle vocali
-client.on('voiceStateUpdate', () => {
-    updateVoiceStatus();
+// LOGGING: Membro entra nel server
+client.on('guildMemberAdd', async (member) => {
+    const embed = new EmbedBuilder()
+        .setColor('#00ff00')
+        .setTitle('✅ Nuovo Membro')
+        .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+        .addFields(
+            { name: 'Utente', value: `${member.user.tag} (${member.user.id})`, inline: true },
+            { name: 'Account creato', value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true }
+        )
+        .setFooter({ text: `Membri totali: ${member.guild.memberCount}` })
+        .setTimestamp();
+    
+    await sendLog(embed);
 });
 
-// Sistema automatico di scambio ruoli
+// LOGGING: Membro esce dal server
+client.on('guildMemberRemove', async (member) => {
+    const embed = new EmbedBuilder()
+        .setColor('#ff0000')
+        .setTitle('❌ Membro Uscito')
+        .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+        .addFields(
+            { name: 'Utente', value: `${member.user.tag} (${member.user.id})`, inline: true },
+            { name: 'Entrato', value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>`, inline: true }
+        )
+        .setFooter({ text: `Membri totali: ${member.guild.memberCount}` })
+        .setTimestamp();
+    
+    await sendLog(embed);
+});
+
+// LOGGING: Ban
+client.on('guildBanAdd', async (ban) => {
+    const embed = new EmbedBuilder()
+        .setColor('#990000')
+        .setTitle('🔨 Utente Bannato')
+        .setThumbnail(ban.user.displayAvatarURL({ dynamic: true }))
+        .addFields(
+            { name: 'Utente', value: `${ban.user.tag} (${ban.user.id})` },
+            { name: 'Motivo', value: ban.reason || 'Nessun motivo specificato' }
+        )
+        .setTimestamp();
+    
+    await sendLog(embed);
+});
+
+// LOGGING: Unban
+client.on('guildBanRemove', async (ban) => {
+    const embed = new EmbedBuilder()
+        .setColor('#00cc00')
+        .setTitle('🔓 Utente Sbannato')
+        .setThumbnail(ban.user.displayAvatarURL({ dynamic: true }))
+        .addFields(
+            { name: 'Utente', value: `${ban.user.tag} (${ban.user.id})` }
+        )
+        .setTimestamp();
+    
+    await sendLog(embed);
+});
+
+// LOGGING: Ruolo aggiunto/rimosso
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
     const oldRoles = oldMember.roles.cache;
     const newRoles = newMember.roles.cache;
 
     // Trova i ruoli aggiunti
     const addedRoles = newRoles.filter(role => !oldRoles.has(role.id));
+    // Trova i ruoli rimossi
+    const removedRoles = oldRoles.filter(role => !newRoles.has(role.id));
 
     // Se è stato aggiunto il ruolo "Verificato"
     if (addedRoles.has(ROLE_VERIFICATO)) {
@@ -244,6 +305,120 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
             }
         }
     }
+
+    // Log ruoli aggiunti
+    if (addedRoles.size > 0) {
+        const embed = new EmbedBuilder()
+            .setColor('#0099ff')
+            .setTitle('🎭 Ruolo Aggiunto')
+            .setThumbnail(newMember.user.displayAvatarURL({ dynamic: true }))
+            .addFields(
+                { name: 'Utente', value: `${newMember.user.tag}`, inline: true },
+                { name: 'Ruoli aggiunti', value: addedRoles.map(r => r.toString()).join(', ') }
+            )
+            .setTimestamp();
+        
+        await sendLog(embed);
+    }
+
+    // Log ruoli rimossi
+    if (removedRoles.size > 0) {
+        const embed = new EmbedBuilder()
+            .setColor('#ff6600')
+            .setTitle('🎭 Ruolo Rimosso')
+            .setThumbnail(newMember.user.displayAvatarURL({ dynamic: true }))
+            .addFields(
+                { name: 'Utente', value: `${newMember.user.tag}`, inline: true },
+                { name: 'Ruoli rimossi', value: removedRoles.map(r => r.name).join(', ') }
+            )
+            .setTimestamp();
+        
+        await sendLog(embed);
+    }
+
+    // Log cambio nickname
+    if (oldMember.nickname !== newMember.nickname) {
+        const embed = new EmbedBuilder()
+            .setColor('#ffcc00')
+            .setTitle('👤 Nickname Cambiato')
+            .setThumbnail(newMember.user.displayAvatarURL({ dynamic: true }))
+            .addFields(
+                { name: 'Utente', value: `${newMember.user.tag}`, inline: true },
+                { name: 'Vecchio nickname', value: oldMember.nickname || 'Nessuno', inline: true },
+                { name: 'Nuovo nickname', value: newMember.nickname || 'Nessuno', inline: true }
+            )
+            .setTimestamp();
+        
+        await sendLog(embed);
+    }
+});
+
+// LOGGING: Messaggio cancellato
+client.on('messageDelete', async (message) => {
+    if (message.author.bot) return;
+    if (!message.content) return;
+
+    const embed = new EmbedBuilder()
+        .setColor('#ff3333')
+        .setTitle('🗑️ Messaggio Cancellato')
+        .addFields(
+            { name: 'Autore', value: `${message.author.tag}`, inline: true },
+            { name: 'Canale', value: `${message.channel}`, inline: true },
+            { name: 'Contenuto', value: message.content.substring(0, 1024) || 'Nessun contenuto testuale' }
+        )
+        .setTimestamp();
+    
+    await sendLog(embed);
+});
+
+// LOGGING: Messaggio modificato
+client.on('messageUpdate', async (oldMessage, newMessage) => {
+    if (newMessage.author.bot) return;
+    if (oldMessage.content === newMessage.content) return;
+    if (!oldMessage.content || !newMessage.content) return;
+
+    const embed = new EmbedBuilder()
+        .setColor('#ffaa00')
+        .setTitle('✏️ Messaggio Modificato')
+        .addFields(
+            { name: 'Autore', value: `${newMessage.author.tag}`, inline: true },
+            { name: 'Canale', value: `${newMessage.channel}`, inline: true },
+            { name: 'Prima', value: oldMessage.content.substring(0, 1024) },
+            { name: 'Dopo', value: newMessage.content.substring(0, 1024) }
+        )
+        .setTimestamp();
+    
+    await sendLog(embed);
+});
+
+// LOGGING: Canale creato
+client.on('channelCreate', async (channel) => {
+    const embed = new EmbedBuilder()
+        .setColor('#00ffcc')
+        .setTitle('📢 Canale Creato')
+        .addFields(
+            { name: 'Nome', value: channel.name, inline: true },
+            { name: 'Tipo', value: channel.type.toString(), inline: true },
+            { name: 'ID', value: channel.id }
+        )
+        .setTimestamp();
+    
+    await sendLog(embed);
+});
+
+// LOGGING: Canale eliminato
+client.on('channelDelete', async (channel) => {
+    const embed = new EmbedBuilder()
+        .setColor('#cc0000')
+        .setTitle('📢 Canale Eliminato')
+        .addFields(
+            { name: 'Nome', value: channel.name, inline: true },
+            { name: 'Tipo', value: channel.type.toString(), inline: true },
+            { name: 'ID', value: channel.id }
+        )
+        .setTimestamp();
+    
+    await sendLog(embed);
 });
 
 client.on('interactionCreate', async (interaction) => {
@@ -320,12 +495,12 @@ client.on('interactionCreate', async (interaction) => {
         }
 
         try {
-            await user.send(`👢 Sei stato espulso da **${interaction.guild.name}**\nMotivo: ${reason}`).catch(() => {});
+            await user.send(`💢 Sei stato espulso da **${interaction.guild.name}**\nMotivo: ${reason}`).catch(() => {});
             await member.kick(reason);
 
             const embed = new EmbedBuilder()
                 .setColor('#ff9900')
-                .setTitle('👢 Utente Espulso')
+                .setTitle('💢 Utente Espulso')
                 .addFields(
                     { name: 'Utente', value: `${user.tag}`, inline: true },
                     { name: 'Espulso da', value: interaction.user.tag, inline: true },
@@ -363,11 +538,13 @@ client.on('interactionCreate', async (interaction) => {
                 .addFields(
                     { name: 'Utente', value: `${user.tag}`, inline: true },
                     { name: 'Durata', value: `${duration} minuti`, inline: true },
+                    { name: 'Moderatore', value: interaction.user.tag, inline: true },
                     { name: 'Motivo', value: reason }
                 )
                 .setTimestamp();
 
             await interaction.reply({ embeds: [embed] });
+            await sendLog(embed);
         } catch (error) {
             await interaction.reply({ content: '❌ Errore durante il timeout!', ephemeral: true });
         }
@@ -403,11 +580,13 @@ client.on('interactionCreate', async (interaction) => {
             .addFields(
                 { name: 'Utente', value: `${user.tag}`, inline: true },
                 { name: 'Totale avvisi', value: `${warnings.get(key).length}`, inline: true },
+                { name: 'Moderatore', value: interaction.user.tag, inline: true },
                 { name: 'Motivo', value: reason }
             )
             .setTimestamp();
 
         await interaction.reply({ embeds: [embed] });
+        await sendLog(embed);
     }
 
     // WARNINGS
@@ -451,6 +630,18 @@ client.on('interactionCreate', async (interaction) => {
         try {
             const deleted = await interaction.channel.bulkDelete(amount, true);
             await interaction.reply({ content: `🗑️ Cancellati ${deleted.size} messaggi!`, ephemeral: true });
+
+            const embed = new EmbedBuilder()
+                .setColor('#ff6600')
+                .setTitle('🗑️ Messaggi Cancellati in Massa')
+                .addFields(
+                    { name: 'Moderatore', value: interaction.user.tag, inline: true },
+                    { name: 'Canale', value: `${interaction.channel}`, inline: true },
+                    { name: 'Quantità', value: `${deleted.size} messaggi`, inline: true }
+                )
+                .setTimestamp();
+
+            await sendLog(embed);
         } catch (error) {
             await interaction.reply({ content: '❌ Errore durante la cancellazione!', ephemeral: true });
         }
@@ -471,6 +662,18 @@ client.on('interactionCreate', async (interaction) => {
             } else {
                 await interaction.reply(`✅ Modalità lenta impostata a ${seconds} secondi!`);
             }
+
+            const embed = new EmbedBuilder()
+                .setColor('#00aaff')
+                .setTitle('⏱️ Slowmode Modificato')
+                .addFields(
+                    { name: 'Moderatore', value: interaction.user.tag, inline: true },
+                    { name: 'Canale', value: `${interaction.channel}`, inline: true },
+                    { name: 'Durata', value: seconds === 0 ? 'Disattivato' : `${seconds} secondi`, inline: true }
+                )
+                .setTimestamp();
+
+            await sendLog(embed);
         } catch (error) {
             await interaction.reply({ content: '❌ Errore!', ephemeral: true });
         }
@@ -510,100 +713,4 @@ client.on('interactionCreate', async (interaction) => {
                 { name: 'Membri', value: `${guild.memberCount}`, inline: true },
                 { name: 'Creato', value: `<t:${Math.floor(guild.createdTimestamp / 1000)}:R>` },
                 { name: 'Canali', value: `${guild.channels.cache.size}`, inline: true },
-                { name: 'Ruoli', value: `${guild.roles.cache.size}`, inline: true }
-            );
-
-        await interaction.reply({ embeds: [embed] });
-    }
-
-    // AVATAR
-    if (commandName === 'avatar') {
-        const user = interaction.options.getUser('utente') || interaction.user;
-
-        const embed = new EmbedBuilder()
-            .setColor('#0099ff')
-            .setTitle(`Avatar di ${user.tag}`)
-            .setImage(user.displayAvatarURL({ dynamic: true, size: 1024 }));
-
-        await interaction.reply({ embeds: [embed] });
-    }
-
-    // POLL
-    if (commandName === 'poll') {
-        const question = interaction.options.getString('domanda');
-        const optionsStr = interaction.options.getString('opzioni');
-        const options = optionsStr.split(',').map(o => o.trim()).slice(0, 10);
-
-        if (options.length < 2) {
-            return interaction.reply({ content: '❌ Servono almeno 2 opzioni!', ephemeral: true });
-        }
-
-        const emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
-
-        const embed = new EmbedBuilder()
-            .setColor('#00ff00')
-            .setTitle('📊 Sondaggio')
-            .setDescription(`**${question}**\n\n${options.map((o, i) => `${emojis[i]} ${o}`).join('\n')}`)
-            .setFooter({ text: `Creato da ${interaction.user.tag}` });
-
-        const msg = await interaction.reply({ embeds: [embed], fetchReply: true });
-
-        for (let i = 0; i < options.length; i++) {
-            await msg.react(emojis[i]);
-        }
-    }
-
-    // 8BALL
-    if (commandName === '8ball') {
-        const question = interaction.options.getString('domanda');
-        const responses = [
-            'Sì, decisamente!', 'È certo!', 'Senza dubbio!', 'Puoi contarci!',
-            'Come la vedo io, sì', 'Molto probabile', 'Sembra buono',
-            'Non è chiaro, riprova', 'Chiedi di nuovo più tardi', 'Meglio non dirtelo ora',
-            'Non ci contare', 'La mia risposta è no', 'Le mie fonti dicono di no',
-            'Le prospettive non sono buone', 'Molto dubbioso'
-        ];
-
-        const answer = responses[Math.floor(Math.random() * responses.length)];
-
-        const embed = new EmbedBuilder()
-            .setColor('#9900ff')
-            .setTitle('🎱 Palla Magica 8')
-            .addFields(
-                { name: 'Domanda', value: question },
-                { name: 'Risposta', value: answer }
-            );
-
-        await interaction.reply({ embeds: [embed] });
-    }
-
-    // SAY
-    if (commandName === 'say') {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-            return interaction.reply({ content: '❌ Non hai i permessi!', ephemeral: true });
-        }
-
-        const message = interaction.options.getString('messaggio');
-        await interaction.channel.send(message);
-        await interaction.reply({ content: '✅ Messaggio inviato!', ephemeral: true });
-    }
-
-    // HELP
-    if (commandName === 'help') {
-        const embed = new EmbedBuilder()
-            .setColor('#0099ff')
-            .setTitle('📋 Comandi del Bot')
-            .setDescription('Ecco tutti i comandi disponibili:')
-            .addFields(
-                { name: '🛡️ Moderazione', value: '`/ban` `/unban` `/kick` `/timeout` `/warn` `/warnings` `/clear` `/slowmode`' },
-                { name: 'ℹ️ Informativi', value: '`/userinfo` `/serverinfo` `/avatar`' },
-                { name: '🎉 Divertimento', value: '`/poll` `/8ball` `/say`' },
-                { name: '❓ Aiuto', value: '`/help`' }
-            )
-            .setFooter({ text: 'Bot di moderazione completo' });
-
-        await interaction.reply({ embeds: [embed] });
-    }
-});
-
-client.login(TOKEN);
+                { name: 'Ruoli', value: `${guil
