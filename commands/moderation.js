@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
-const { warnings } = require('../config');
+const { warnings, STAFF_ROLE_ID } = require('../config'); // 🆕 Importato STAFF_ROLE_ID
 const { sendLog } = require('../utils/logger');
 
 module.exports = [
@@ -18,6 +18,11 @@ module.exports = [
             .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
 
         async execute(interaction) {
+            // 🆕 CONTROLLO RUOLO STAFF
+            if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
+                return interaction.reply({ content: '❌ Devi avere il ruolo Staff per usare questo comando!', ephemeral: true });
+            }
+
             if (!interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) {
                 return interaction.reply({ content: '❌ Non hai i permessi!', ephemeral: true });
             }
@@ -66,6 +71,11 @@ module.exports = [
             .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
 
         async execute(interaction) {
+            // 🆕 CONTROLLO RUOLO STAFF
+            if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
+                return interaction.reply({ content: '❌ Devi avere il ruolo Staff per usare questo comando!', ephemeral: true });
+            }
+
             if (!interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) {
                 return interaction.reply({ content: '❌ Non hai i permessi!', ephemeral: true });
             }
@@ -96,6 +106,11 @@ module.exports = [
             .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
 
         async execute(interaction) {
+            // 🆕 CONTROLLO RUOLO STAFF
+            if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
+                return interaction.reply({ content: '❌ Devi avere il ruolo Staff per usare questo comando!', ephemeral: true });
+            }
+
             if (!interaction.member.permissions.has(PermissionFlagsBits.KickMembers)) {
                 return interaction.reply({ content: '❌ Non hai i permessi!', ephemeral: true });
             }
@@ -109,12 +124,12 @@ module.exports = [
             }
 
             try {
-                await user.send(`👢 Sei stato espulso da **${interaction.guild.name}**\nMotivo: ${reason}`).catch(() => {});
+                await user.send(`💢 Sei stato espulso da **${interaction.guild.name}**\nMotivo: ${reason}`).catch(() => {});
                 await member.kick(reason);
 
                 const embed = new EmbedBuilder()
                     .setColor('#ff9900')
-                    .setTitle('👢 Utente Espulso')
+                    .setTitle('💢 Utente Espulso')
                     .addFields(
                         { name: 'Utente', value: `${user.tag}`, inline: true },
                         { name: 'Espulso da', value: interaction.user.tag, inline: true },
@@ -150,6 +165,11 @@ module.exports = [
             .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
         async execute(interaction) {
+            // 🆕 CONTROLLO RUOLO STAFF
+            if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
+                return interaction.reply({ content: '❌ Devi avere il ruolo Staff per usare questo comando!', ephemeral: true });
+            }
+
             if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
                 return interaction.reply({ content: '❌ Non hai i permessi!', ephemeral: true });
             }
@@ -200,6 +220,11 @@ module.exports = [
             .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
         async execute(interaction) {
+            // 🆕 CONTROLLO RUOLO STAFF
+            if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
+                return interaction.reply({ content: '❌ Devi avere il ruolo Staff per usare questo comando!', ephemeral: true });
+            }
+
             if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
                 return interaction.reply({ content: '❌ Non hai i permessi!', ephemeral: true });
             }
@@ -249,6 +274,11 @@ module.exports = [
             .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
         async execute(interaction) {
+            // 🆕 CONTROLLO RUOLO STAFF
+            if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
+                return interaction.reply({ content: '❌ Devi avere il ruolo Staff per usare questo comando!', ephemeral: true });
+            }
+
             if (!interaction.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
                 return interaction.reply({ content: '❌ Non hai i permessi!', ephemeral: true });
             }
@@ -291,6 +321,11 @@ module.exports = [
             .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
 
         async execute(interaction) {
+            // 🆕 CONTROLLO RUOLO STAFF
+            if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
+                return interaction.reply({ content: '❌ Devi avere il ruolo Staff per usare questo comando!', ephemeral: true });
+            }
+
             if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
                 return interaction.reply({ content: '❌ Non hai i permessi!', ephemeral: true });
             }
@@ -331,6 +366,11 @@ module.exports = [
             .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
 
         async execute(interaction) {
+            // 🆕 CONTROLLO RUOLO STAFF
+            if (!interaction.member.roles.cache.has(STAFF_ROLE_ID)) {
+                return interaction.reply({ content: '❌ Devi avere il ruolo Staff per usare questo comando!', ephemeral: true });
+            }
+
             if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
                 return interaction.reply({ content: '❌ Non hai i permessi!', ephemeral: true });
             }
