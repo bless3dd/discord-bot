@@ -6,6 +6,7 @@ module.exports = {
     // Ruoli
     ROLE_VERIFICATO: '1397004446365384835',
     ROLE_NON_VERIFICATO: '1447612498562777231',
+    STAFF_ROLE_ID: '1224070785325596792', // 🆕 Ruolo minimo per comandi staff
     
     // Canali
     LOG_CHANNEL_ID: '1452627029030731899',
