@@ -11,40 +11,72 @@
             box-sizing: border-box;
         }
 
+        /* Theme Variables */
+        :root {
+            --primary: #8b5cf6;
+            --secondary: #6366f1;
+            --accent: #a78bfa;
+            --glow: rgba(139, 92, 246, 0.5);
+        }
+
+        body[data-theme="cyan"] {
+            --primary: #06b6d4;
+            --secondary: #0891b2;
+            --accent: #22d3ee;
+            --glow: rgba(6, 182, 212, 0.5);
+        }
+
+        body[data-theme="pink"] {
+            --primary: #ec4899;
+            --secondary: #d946ef;
+            --accent: #f9a8d4;
+            --glow: rgba(236, 72, 153, 0.5);
+        }
+
+        body[data-theme="green"] {
+            --primary: #10b981;
+            --secondary: #059669;
+            --accent: #34d399;
+            --glow: rgba(16, 185, 129, 0.5);
+        }
+
+        body[data-theme="orange"] {
+            --primary: #f97316;
+            --secondary: #ea580c;
+            --accent: #fb923c;
+            --glow: rgba(249, 115, 22, 0.5);
+        }
+
+        body[data-theme="blue"] {
+            --primary: #3b82f6;
+            --secondary: #2563eb;
+            --accent: #60a5fa;
+            --glow: rgba(59, 130, 246, 0.5);
+        }
+
+        body[data-theme="red"] {
+            --primary: #ef4444;
+            --secondary: #dc2626;
+            --accent: #f87171;
+            --glow: rgba(239, 68, 68, 0.5);
+        }
+
+        body[data-theme="gold"] {
+            --primary: #f59e0b;
+            --secondary: #d97706;
+            --accent: #fbbf24;
+            --glow: rgba(245, 158, 11, 0.5);
+        }
+
         body {
             font-family: 'Inter', 'Segoe UI', sans-serif;
             background: #0a0118;
             color: #fff;
             overflow-x: hidden;
-            position: relative;
-            cursor: none;
+            transition: background 0.3s ease;
         }
 
-        /* Custom Cursor */
-        .cursor {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #a78bfa;
-            border-radius: 50%;
-            position: fixed;
-            pointer-events: none;
-            z-index: 9999;
-            transition: all 0.15s ease;
-            box-shadow: 0 0 20px #a78bfa;
-        }
-
-        .cursor-follower {
-            width: 8px;
-            height: 8px;
-            background: #a78bfa;
-            border-radius: 50%;
-            position: fixed;
-            pointer-events: none;
-            z-index: 9998;
-            transition: all 0.1s ease;
-        }
-
-        /* Background con nome KYRA gigante */
+        /* Background KYRA text */
         .bg-text {
             position: fixed;
             top: 50%;
@@ -53,82 +85,74 @@
             font-size: 25vw;
             font-weight: 900;
             color: transparent;
-            -webkit-text-stroke: 1px rgba(167, 139, 250, 0.1);
+            -webkit-text-stroke: 1px;
+            -webkit-text-stroke-color: var(--accent);
+            opacity: 0.1;
             z-index: 0;
             pointer-events: none;
             letter-spacing: -0.05em;
-            animation: breathe 8s ease-in-out infinite;
             user-select: none;
+            will-change: opacity;
+            animation: breathe 8s ease-in-out infinite;
         }
 
         @keyframes breathe {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
-            50% { transform: translate(-50%, -50%) scale(1.05); opacity: 0.15; }
+            0%, 100% { opacity: 0.1; }
+            50% { opacity: 0.05; }
         }
 
-        /* Gradient orbs animati */
+        /* Gradient orbs - OTTIMIZZATI */
         .orb {
             position: fixed;
             border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.6;
+            filter: blur(60px);
+            opacity: 0.4;
             pointer-events: none;
             z-index: 1;
-            animation: float-orb 20s infinite ease-in-out;
+            will-change: transform;
         }
 
         .orb1 {
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, #8b5cf6, transparent);
-            top: -200px;
-            left: -200px;
-            animation-delay: 0s;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--primary), transparent);
+            top: -150px;
+            left: -150px;
+            animation: float1 25s infinite ease-in-out;
         }
 
         .orb2 {
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, #3b82f6, transparent);
-            bottom: -150px;
-            right: -150px;
-            animation-delay: 7s;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, var(--secondary), transparent);
+            bottom: -100px;
+            right: -100px;
+            animation: float2 20s infinite ease-in-out;
         }
 
-        .orb3 {
-            width: 450px;
-            height: 450px;
-            background: radial-gradient(circle, #6366f1, transparent);
-            top: 40%;
-            right: 10%;
-            animation-delay: 14s;
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(80px, -40px); }
         }
 
-        @keyframes float-orb {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(100px, -50px) scale(1.1); }
-            66% { transform: translate(-50px, 100px) scale(0.9); }
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-60px, 60px); }
         }
 
-        /* Header futuristico */
+        /* Header */
         header {
             position: fixed;
             top: 0;
             width: 100%;
             z-index: 100;
-            background: rgba(10, 1, 24, 0.7);
-            backdrop-filter: blur(20px) saturate(180%);
-            border-bottom: 1px solid rgba(167, 139, 250, 0.2);
+            background: rgba(10, 1, 24, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding: 1.5rem 3rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            animation: slideDown 1s ease;
-        }
-
-        @keyframes slideDown {
-            from { transform: translateY(-100%); }
-            to { transform: translateY(0); }
         }
 
         .logo {
@@ -137,47 +161,47 @@
             gap: 1rem;
             font-size: 1.8rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #a78bfa, #6366f1);
+            background: linear-gradient(135deg, var(--accent), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease;
         }
 
         .logo:hover {
             transform: scale(1.05);
-            filter: drop-shadow(0 0 20px rgba(167, 139, 250, 0.6));
         }
 
         .logo-img {
             width: 55px;
             height: 55px;
+            border: 3px solid var(--accent);
             border-radius: 50%;
-            border: 3px solid #a78bfa;
-            box-shadow: 0 0 30px rgba(167, 139, 250, 0.5);
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease;
         }
 
         .logo:hover .logo-img {
-            transform: rotate(360deg) scale(1.1);
-            box-shadow: 0 0 40px rgba(167, 139, 250, 0.8);
+            transform: rotate(360deg);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
 
         .status {
             display: flex;
             align-items: center;
             gap: 0.7rem;
-            background: rgba(167, 139, 250, 0.15);
+            background: rgba(255, 255, 255, 0.05);
             padding: 0.7rem 1.5rem;
             border-radius: 50px;
-            border: 1px solid rgba(167, 139, 250, 0.3);
-            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease;
         }
 
         .status:hover {
-            background: rgba(167, 139, 250, 0.25);
-            transform: scale(1.05);
-            box-shadow: 0 0 30px rgba(167, 139, 250, 0.4);
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .status-dot {
@@ -185,16 +209,127 @@
             height: 12px;
             background: #10b981;
             border-radius: 50%;
-            box-shadow: 0 0 20px #10b981;
             animation: pulse-dot 2s ease infinite;
         }
 
         @keyframes pulse-dot {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 20px #10b981; }
-            50% { transform: scale(1.2); box-shadow: 0 0 30px #10b981; }
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
         }
 
-        /* Hero Section */
+        .theme-toggle {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(90deg);
+        }
+
+        /* Theme Panel */
+        .theme-panel {
+            position: fixed;
+            top: 100px;
+            right: -400px;
+            width: 350px;
+            background: rgba(10, 1, 24, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            z-index: 200;
+            transition: right 0.4s ease;
+            box-shadow: -10px 10px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .theme-panel.open {
+            right: 2rem;
+        }
+
+        .theme-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .theme-panel-header h3 {
+            font-size: 1.3rem;
+        }
+
+        .close-panel {
+            width: 35px;
+            height: 35px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close-panel:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .theme-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.7rem;
+        }
+
+        .theme-option:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .theme-option.active {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .theme-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .theme-option:hover .theme-preview {
+            transform: scale(1.1);
+        }
+
+        .theme-option span {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Hero */
         .hero {
             position: relative;
             z-index: 10;
@@ -211,29 +346,23 @@
             font-size: clamp(3rem, 10vw, 7rem);
             font-weight: 900;
             margin-bottom: 1.5rem;
-            background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #6366f1 100%);
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--secondary) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            animation: slideUp 1.2s ease, textGlow 3s ease infinite;
-            letter-spacing: -0.02em;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(50px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes textGlow {
-            0%, 100% { filter: drop-shadow(0 0 20px rgba(167, 139, 250, 0.5)); }
-            50% { filter: drop-shadow(0 0 40px rgba(167, 139, 250, 0.8)); }
+            animation: fadeInUp 1s ease;
         }
 
         .hero p {
             font-size: clamp(1.2rem, 3vw, 1.8rem);
             margin-bottom: 3rem;
             opacity: 0.9;
-            animation: slideUp 1.4s ease;
+            animation: fadeInUp 1.2s ease;
             max-width: 700px;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .cta-buttons {
@@ -241,12 +370,12 @@
             gap: 1.5rem;
             flex-wrap: wrap;
             justify-content: center;
-            animation: slideUp 1.6s ease;
+            animation: fadeInUp 1.4s ease;
         }
 
         .cta-button {
             padding: 1.2rem 3rem;
-            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             border: none;
             border-radius: 50px;
             color: #fff;
@@ -254,45 +383,21 @@
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
             text-decoration: none;
             display: inline-block;
         }
 
-        .cta-button:before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .cta-button:hover:before {
-            width: 400px;
-            height: 400px;
-        }
-
         .cta-button:hover {
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 0 20px 60px rgba(139, 92, 246, 0.6);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px var(--glow);
         }
 
         .cta-button.secondary {
             background: transparent;
-            border: 2px solid #8b5cf6;
+            border: 2px solid var(--primary);
         }
 
-        .cta-button.secondary:hover {
-            background: rgba(139, 92, 246, 0.2);
-        }
-
-        /* Stats con effetto hologram */
+        /* Stats */
         .stats {
             position: relative;
             z-index: 10;
@@ -305,45 +410,27 @@
         }
 
         .stat-card {
-            background: rgba(139, 92, 246, 0.05);
-            backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(167, 139, 250, 0.2);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 25px;
             padding: 3rem 2rem;
             text-align: center;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.3s ease;
             cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card:before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(167, 139, 250, 0.1), transparent);
-            transform: rotate(45deg);
-            transition: all 0.6s ease;
-        }
-
-        .stat-card:hover:before {
-            left: 100%;
         }
 
         .stat-card:hover {
-            transform: translateY(-20px) scale(1.05);
-            background: rgba(139, 92, 246, 0.15);
-            border-color: rgba(167, 139, 250, 0.5);
-            box-shadow: 0 30px 80px rgba(139, 92, 246, 0.4);
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--accent);
+            box-shadow: 0 20px 40px var(--glow);
         }
 
         .stat-number {
             font-size: 4rem;
             font-weight: 900;
-            background: linear-gradient(135deg, #a78bfa, #6366f1);
+            background: linear-gradient(135deg, var(--accent), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.5rem;
@@ -357,8 +444,8 @@
             font-weight: 600;
         }
 
-        /* Features */
-        .features {
+        /* Features & Commands - STILI COMUNI */
+        .section {
             position: relative;
             z-index: 10;
             padding: 6rem 2rem;
@@ -366,154 +453,78 @@
             margin: 0 auto;
         }
 
-        .features h2 {
+        .section h2 {
             text-align: center;
             font-size: clamp(2.5rem, 6vw, 4rem);
             font-weight: 900;
             margin-bottom: 4rem;
-            background: linear-gradient(135deg, #fff, #a78bfa);
+            background: linear-gradient(135deg, #fff, var(--accent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .features-grid {
+        .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 2.5rem;
+            gap: 2rem;
         }
 
-        .feature-card {
-            background: rgba(139, 92, 246, 0.05);
-            backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(167, 139, 250, 0.2);
+        .features-grid {
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        }
+
+        .commands-grid {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 25px;
             padding: 3rem;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.3s ease;
             cursor: pointer;
-            position: relative;
-            overflow: hidden;
         }
 
-        .feature-card:before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(167, 139, 250, 0.15), transparent 40%);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .feature-card:hover:before {
-            opacity: 1;
-        }
-
-        .feature-card:hover {
+        .card:hover {
             transform: translateY(-10px);
-            border-color: rgba(167, 139, 250, 0.5);
-            box-shadow: 0 30px 80px rgba(139, 92, 246, 0.4);
+            border-color: var(--accent);
+            box-shadow: 0 20px 40px var(--glow);
         }
 
         .feature-icon {
             font-size: 4rem;
             margin-bottom: 1.5rem;
             display: inline-block;
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease;
         }
 
-        .feature-card:hover .feature-icon {
+        .card:hover .feature-icon {
             transform: scale(1.2) rotate(5deg);
-            filter: drop-shadow(0 0 20px rgba(167, 139, 250, 0.8));
         }
 
-        .feature-title {
+        .feature-title, .command-name {
             font-size: 1.8rem;
             font-weight: 800;
             margin-bottom: 1rem;
-            background: linear-gradient(135deg, #fff, #a78bfa);
+            background: linear-gradient(135deg, #fff, var(--accent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .feature-desc {
+        .command-name {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+        }
+
+        .feature-desc, .command-desc {
             opacity: 0.8;
             line-height: 1.8;
             font-size: 1.1rem;
         }
 
-        /* Commands Section */
-        .commands {
-            position: relative;
-            z-index: 10;
-            padding: 6rem 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .commands h2 {
-            text-align: center;
-            font-size: clamp(2.5rem, 6vw, 4rem);
-            font-weight: 900;
-            margin-bottom: 4rem;
-            background: linear-gradient(135deg, #fff, #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .commands-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .command-card {
-            background: rgba(139, 92, 246, 0.05);
-            backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(167, 139, 250, 0.2);
-            border-radius: 20px;
-            padding: 2rem;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .command-card:before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 4px;
-            height: 100%;
-            background: linear-gradient(135deg, #8b5cf6, #6366f1);
-            transform: scaleY(0);
-            transition: transform 0.3s ease;
-        }
-
-        .command-card:hover:before {
-            transform: scaleY(1);
-        }
-
-        .command-card:hover {
-            transform: translateX(15px);
-            background: rgba(139, 92, 246, 0.15);
-            border-color: rgba(167, 139, 250, 0.5);
-            box-shadow: -10px 10px 40px rgba(139, 92, 246, 0.3);
-        }
-
-        .command-name {
-            font-size: 1.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #a78bfa, #6366f1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.7rem;
-            font-family: 'Courier New', monospace;
-        }
-
         .command-desc {
-            opacity: 0.8;
             font-size: 1rem;
-            line-height: 1.6;
         }
 
         /* Footer */
@@ -524,7 +535,7 @@
             padding: 3rem 2rem;
             background: rgba(10, 1, 24, 0.8);
             backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(167, 139, 250, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
             margin-top: 6rem;
         }
 
@@ -533,21 +544,20 @@
             font-size: 1.1rem;
         }
 
-        /* Scroll to top button */
+        /* Scroll to top */
         .scroll-top {
             position: fixed;
             bottom: 3rem;
             right: 3rem;
             width: 60px;
             height: 60px;
-            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
             cursor: pointer;
-            box-shadow: 0 10px 40px rgba(139, 92, 246, 0.5);
             transition: all 0.3s ease;
             z-index: 100;
             opacity: 0;
@@ -560,8 +570,7 @@
         }
 
         .scroll-top:hover {
-            transform: translateY(-10px) scale(1.1) rotate(360deg);
-            box-shadow: 0 20px 60px rgba(139, 92, 246, 0.7);
+            transform: translateY(-10px) rotate(360deg);
         }
 
         /* Responsive */
@@ -570,71 +579,86 @@
             .bg-text { font-size: 35vw; }
             .cta-buttons { flex-direction: column; width: 100%; }
             .cta-button { width: 100%; }
-            body { cursor: auto; }
-            .cursor, .cursor-follower { display: none; }
+            .theme-panel.open { right: 1rem; left: 1rem; width: auto; }
         }
     </style>
 </head>
 <body>
-    <!-- Custom Cursor -->
-    <div class="cursor"></div>
-    <div class="cursor-follower"></div>
-
-    <!-- Background text KYRA -->
+    <!-- Background -->
     <div class="bg-text">KYRA</div>
-
-    <!-- Gradient orbs -->
     <div class="orb orb1"></div>
     <div class="orb orb2"></div>
-    <div class="orb orb3"></div>
 
     <!-- Header -->
     <header>
         <div class="logo">
             <svg class="logo-img" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1">
-                            <animate attributeName="stop-color" values="#8b5cf6;#6366f1;#8b5cf6" dur="3s" repeatCount="indefinite"/>
-                        </stop>
-                        <stop offset="100%" style="stop-color:#6366f1;stop-opacity:1">
-                            <animate attributeName="stop-color" values="#6366f1;#3b82f6;#6366f1" dur="3s" repeatCount="indefinite"/>
-                        </stop>
+                    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:var(--primary)"/>
+                        <stop offset="100%" style="stop-color:var(--secondary)"/>
                     </linearGradient>
-                    <filter id="logoGlow">
-                        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-                        <feMerge>
-                            <feMergeNode in="coloredBlur"/>
-                            <feMergeNode in="SourceGraphic"/>
-                        </feMerge>
-                    </filter>
                 </defs>
-                <circle cx="250" cy="250" r="200" fill="none" stroke="url(#logoGradient)" stroke-width="3" opacity="0.4" stroke-dasharray="20 15">
-                    <animateTransform attributeName="transform" type="rotate" from="0 250 250" to="360 250 250" dur="20s" repeatCount="indefinite"/>
-                </circle>
+                <circle cx="250" cy="250" r="200" fill="none" stroke="url(#logoGrad)" stroke-width="3" opacity="0.4"/>
                 <g transform="translate(250, 250)">
-                    <polygon points="0,-120 104,-60 104,60 0,120 -104,60 -104,-60" fill="none" stroke="url(#logoGradient)" stroke-width="3" opacity="0.6">
-                        <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="30s" repeatCount="indefinite"/>
-                    </polygon>
+                    <polygon points="0,-120 104,-60 104,60 0,120 -104,60 -104,-60" fill="none" stroke="url(#logoGrad)" stroke-width="3" opacity="0.6"/>
+                    <path d="M -30,-60 L -30,60 L -20,60 L -20,5 L 35,60 L 50,60 L -10,-5 L 45,-60 L 30,-60 L -20,-15 L -20,-60 Z" fill="url(#logoGrad)"/>
                 </g>
-                <g transform="translate(250, 250)" filter="url(#logoGlow)">
-                    <path d="M -30,-60 L -30,60 L -20,60 L -20,5 L 35,60 L 50,60 L -10,-5 L 45,-60 L 30,-60 L -20,-15 L -20,-60 Z" fill="url(#logoGradient)">
-                        <animate attributeName="opacity" values="1;0.8;1" dur="3s" repeatCount="indefinite"/>
-                    </path>
-                </g>
-                <circle cx="250" cy="150" r="4" fill="#a78bfa" filter="url(#logoGlow)">
-                    <animateTransform attributeName="transform" type="rotate" from="0 250 250" to="360 250 250" dur="8s" repeatCount="indefinite"/>
-                </circle>
             </svg>
             <span>KyraBot</span>
         </div>
-        <div class="status">
-            <div class="status-dot"></div>
-            <span>Caricamento...</span>
+        <div class="header-right">
+            <div class="status">
+                <div class="status-dot"></div>
+                <span id="statusText">Caricamento...</span>
+            </div>
+            <button class="theme-toggle" id="themeBtn">🎨</button>
         </div>
     </header>
 
-    <!-- Hero Section -->
+    <!-- Theme Panel -->
+    <div class="theme-panel" id="themePanel">
+        <div class="theme-panel-header">
+            <h3>🎨 Scegli tema</h3>
+            <button class="close-panel" id="closeBtn">×</button>
+        </div>
+        <div class="theme-grid">
+            <button class="theme-option active" data-theme="purple">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #8b5cf6, #6366f1)"></div>
+                <span>Viola</span>
+            </button>
+            <button class="theme-option" data-theme="cyan">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #06b6d4, #0891b2)"></div>
+                <span>Ciano</span>
+            </button>
+            <button class="theme-option" data-theme="pink">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #ec4899, #d946ef)"></div>
+                <span>Rosa</span>
+            </button>
+            <button class="theme-option" data-theme="green">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #10b981, #059669)"></div>
+                <span>Verde</span>
+            </button>
+            <button class="theme-option" data-theme="orange">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #f97316, #ea580c)"></div>
+                <span>Arancio</span>
+            </button>
+            <button class="theme-option" data-theme="blue">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #3b82f6, #2563eb)"></div>
+                <span>Blu</span>
+            </button>
+            <button class="theme-option" data-theme="red">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #ef4444, #dc2626)"></div>
+                <span>Rosso</span>
+            </button>
+            <button class="theme-option" data-theme="gold">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #f59e0b, #d97706)"></div>
+                <span>Oro</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Hero -->
     <section class="hero">
         <h1>KyraBot</h1>
         <p>Il Bot Discord di Nuova Generazione - Potenza, Eleganza e Intelligenza Artificiale</p>
@@ -647,121 +671,121 @@
     <!-- Stats -->
     <section class="stats">
         <div class="stat-card">
-            <div class="stat-number" data-target="0">0</div>
+            <div class="stat-number" id="servers">--</div>
             <div class="stat-label">Server Attivi</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number" data-target="0">0</div>
+            <div class="stat-number" id="users">--</div>
             <div class="stat-label">Utenti Attivi</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number" data-target="0">0</div>
+            <div class="stat-number" id="commands">--</div>
             <div class="stat-label">Comandi</div>
         </div>
     </section>
 
     <!-- Features -->
-    <section class="features" id="features">
+    <section class="section" id="features">
         <h2>✨ Funzionalità Premium</h2>
-        <div class="features-grid">
-            <div class="feature-card">
+        <div class="grid features-grid">
+            <div class="card">
                 <div class="feature-icon">🛡️</div>
                 <div class="feature-title">Moderazione Avanzata</div>
-                <div class="feature-desc">Sistema completo con ban, kick, timeout e gestione warning automatica per mantenere il tuo server sicuro.</div>
+                <div class="feature-desc">Sistema completo con ban, kick, timeout e gestione warning automatica.</div>
             </div>
-            <div class="feature-card">
+            <div class="card">
                 <div class="feature-icon">🎤</div>
                 <div class="feature-title">Voice Tracking</div>
-                <div class="feature-desc">Monitora in tempo reale chi è connesso ai canali vocali con statistiche dettagliate.</div>
+                <div class="feature-desc">Monitora in tempo reale chi è connesso ai canali vocali.</div>
             </div>
-            <div class="feature-card">
+            <div class="card">
                 <div class="feature-icon">📊</div>
                 <div class="feature-title">Analytics Server</div>
-                <div class="feature-desc">Statistiche avanzate e informazioni complete sugli utenti e l'attività del server.</div>
+                <div class="feature-desc">Statistiche avanzate e informazioni complete sugli utenti.</div>
             </div>
-            <div class="feature-card">
+            <div class="card">
                 <div class="feature-icon">🎮</div>
                 <div class="feature-title">Utilità & Fun</div>
-                <div class="feature-desc">Sondaggi interattivi, 8ball magica, avatar viewer e molto altro per intrattenere la community.</div>
+                <div class="feature-desc">Sondaggi interattivi, 8ball magica, avatar viewer e molto altro.</div>
             </div>
-            <div class="feature-card">
+            <div class="card">
                 <div class="feature-icon">💬</div>
                 <div class="feature-title">Gestione Messaggi</div>
-                <div class="feature-desc">Pulizia bulk, slow mode intelligente e controllo totale dei canali testuali.</div>
+                <div class="feature-desc">Pulizia bulk, slow mode intelligente e controllo totale.</div>
             </div>
-            <div class="feature-card">
+            <div class="card">
                 <div class="feature-icon">👋</div>
                 <div class="feature-title">Welcome System</div>
-                <div class="feature-desc">Messaggi automatici personalizzati per dare il benvenuto ai nuovi membri del server.</div>
+                <div class="feature-desc">Messaggi automatici personalizzati per nuovi membri.</div>
             </div>
         </div>
     </section>
 
     <!-- Commands -->
-    <section class="commands" id="commands">
+    <section class="section" id="commands">
         <h2>📋 Comandi Disponibili</h2>
-        <div class="commands-grid">
-            <div class="command-card">
+        <div class="grid commands-grid">
+            <div class="card">
                 <div class="command-name">/ping</div>
                 <div class="command-desc">Controlla la latenza del bot</div>
             </div>
-            <div class="command-card">
+            <div class="card">
                 <div class="command-name">/help</div>
                 <div class="command-desc">Mostra tutti i comandi disponibili</div>
             </div>
-            <div class="command-card">
+            <div class="card">
                 <div class="command-name">/ban</div>
                 <div class="command-desc">Banna un utente dal server</div>
             </div>
-            <div class="command-card">
+            <div class="card">
                 <div class="command-name">/unban</div>
                 <div class="command-desc">Rimuove il ban a un utente</div>
             </div>
-            <div class="command-card">
+            <div class="card">
                 <div class="command-name">/kick</div>
                 <div class="command-desc">Espelle un utente dal server</div>
             </div>
-            <div class="command-card">
+            <div class="card">
                 <div class="command-name">/timeout</div>
                 <div class="command-desc">Mette in timeout un utente</div>
             </div>
-            <div class="command-card">
+            <div class="card">
                 <div class="command-name">/warn</div>
                 <div class="command-desc">Avverte un utente</div>
             </div>
-            <div class="command-card">
+            <div class="card">
                 <div class="command-name">/warnings</div>
                 <div class="command-desc">Visualizza gli avvertimenti</div>
             </div>
-            <div class="command-card">
+            <div class="card">
                 <div class="command-name">/clear</div>
                 <div class="command-desc">Elimina messaggi in bulk</div>
             </div>
-            <div class="command-card">
+            <div class="card">
                 <div class="command-name">/slowmode</div>
                 <div class="command-desc">Imposta la modalità lenta</div>
             </div>
-            <div class="command-card">
+            <div class="card">
                 <div class="command-name">/poll</div>
                 <div class="command-desc">Crea un sondaggio interattivo</div>
             </div>
-            <div class="command-card">
+            <div class="card">
                 <div class="command-name">/8ball</div>
                 <div class="command-desc">Consulta la palla magica</div>
             </div>
-            <div class="command-card">
+            <div class="card">
                 <div class="command-name">/say</div>
                 <div class="command-desc">Fai ripetere un messaggio al bot</div>
             </div>
-            <div class="command-card">
+            <div class="card">
                 <div class="command-name">/userinfo</div>
                 <div class="command-desc">Info dettagliate su un utente</div>
             </div>
-            <div class="command-card">
+            <div class="card">
                 <div class="command-name">/serverinfo</div>
                 <div class="command-desc">Info complete sul server</div>
             </div>
-            <div class="command-card">
+            <div class="card">
                 <div class="command-name">/avatar</div>
                 <div class="command-desc">Mostra l'avatar di un utente</div>
             </div>
@@ -775,144 +799,87 @@
     </footer>
 
     <!-- Scroll to top -->
-    <div class="scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</div>
+    <div class="scroll-top" id="scrollTop">↑</div>
 
     <script>
-        // ========================================
-        // CONFIGURAZIONE API
-        // ========================================
         const API_URL = 'https://discord-bot-bot-discord-kira.up.railway.app/api/stats';
 
-        // ========================================
-        // CARICAMENTO STATS DA API
-        // ========================================
+        // Theme Switcher
+        const themeBtn = document.getElementById('themeBtn');
+        const closeBtn = document.getElementById('closeBtn');
+        const themePanel = document.getElementById('themePanel');
+        const themeOptions = document.querySelectorAll('.theme-option');
+
+        themeBtn.onclick = () => themePanel.classList.toggle('open');
+        closeBtn.onclick = () => themePanel.classList.remove('open');
+
+        function setTheme(theme) {
+            document.body.setAttribute('data-theme', theme);
+            localStorage.setItem('kyrabot-theme', theme);
+            themeOptions.forEach(opt => opt.classList.remove('active'));
+            document.querySelector(`[data-theme="${theme}"]`).classList.add('active');
+        }
+
+        themeOptions.forEach(opt => {
+            opt.onclick = () => {
+                setTheme(opt.dataset.theme);
+                setTimeout(() => themePanel.classList.remove('open'), 300);
+            };
+        });
+
+        // Load saved theme
+        setTheme(localStorage.getItem('kyrabot-theme') || 'purple');
+
+        // Fetch Stats
         async function loadStats() {
             try {
-                const response = await fetch(API_URL);
-                const data = await response.json();
+                const res = await fetch(API_URL);
+                const data = await res.json();
                 
-                // Aggiorna status nell'header
-                const statusDot = document.querySelector('.status-dot');
-                const statusText = document.querySelector('.status span');
+                document.getElementById('statusText').textContent = data.online ? 'Online' : 'Offline';
+                document.querySelector('.status-dot').style.background = data.online ? '#10b981' : '#ef4444';
                 
-                if (data.online) {
-                    statusDot.style.background = '#10b981';
-                    statusDot.style.boxShadow = '0 0 20px #10b981';
-                    statusText.textContent = 'Online';
-                } else {
-                    statusDot.style.background = '#ef4444';
-                    statusDot.style.boxShadow = '0 0 20px #ef4444';
-                    statusText.textContent = 'Offline';
-                }
-                
-                // Aggiorna numeri nelle stat cards
-                const statNumbers = document.querySelectorAll('.stat-number');
-                statNumbers[0].dataset.target = data.servers || 0;
-                statNumbers[1].dataset.target = data.users || 0;
-                statNumbers[2].dataset.target = data.commands || 0;
-                
-                // Anima i contatori
-                statNumbers.forEach(animateCounter);
-                
-                console.log('✅ Stats caricate:', data);
-                
-            } catch (error) {
-                console.error('❌ Errore caricamento stats:', error);
-                
-                const statusDot = document.querySelector('.status-dot');
-                const statusText = document.querySelector('.status span');
-                statusDot.style.background = '#ef4444';
-                statusDot.style.boxShadow = '0 0 20px #ef4444';
-                statusText.textContent = 'Connessione fallita';
+                animateNumber('servers', data.servers || 0);
+                animateNumber('users', data.users || 0);
+                animateNumber('commands', data.commands || 0);
+            } catch (err) {
+                document.getElementById('statusText').textContent = 'Offline';
+                document.querySelector('.status-dot').style.background = '#ef4444';
             }
         }
 
-        // ========================================
-        // ANIMAZIONE CONTATORI
-        // ========================================
-        function animateCounter(element) {
-            const target = parseInt(element.dataset.target) || 0;
-            const duration = 2000;
-            const step = target / (duration / 16);
+        function animateNumber(id, target) {
+            const el = document.getElementById(id);
             let current = 0;
-
-            const counter = setInterval(() => {
-                current += step;
+            const increment = target / 50;
+            const timer = setInterval(() => {
+                current += increment;
                 if (current >= target) {
-                    element.textContent = target;
-                    clearInterval(counter);
+                    el.textContent = target;
+                    clearInterval(timer);
                 } else {
-                    element.textContent = Math.floor(current);
+                    el.textContent = Math.floor(current);
                 }
-            }, 16);
+            }, 30);
         }
 
-        // ========================================
-        // CUSTOM CURSOR
-        // ========================================
-        const cursor = document.querySelector('.cursor');
-        const cursorFollower = document.querySelector('.cursor-follower');
-
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
-            
-            setTimeout(() => {
-                cursorFollower.style.left = e.clientX + 'px';
-                cursorFollower.style.top = e.clientY + 'px';
-            }, 100);
-        });
-
-        // Cursor hover effects
-        document.querySelectorAll('a, button, .stat-card, .feature-card, .command-card').forEach(el => {
-            el.addEventListener('mouseenter', () => {
-                cursor.style.transform = 'scale(2)';
-                cursor.style.borderColor = '#6366f1';
-            });
-            el.addEventListener('mouseleave', () => {
-                cursor.style.transform = 'scale(1)';
-                cursor.style.borderColor = '#a78bfa';
-            });
-        });
-
-        // ========================================
-        // MAGNETIC EFFECT PER FEATURE CARDS
-        // ========================================
-        document.querySelectorAll('.feature-card').forEach(card => {
-            card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                card.style.setProperty('--mouse-x', x + 'px');
-                card.style.setProperty('--mouse-y', y + 'px');
-            });
-        });
-
-        // ========================================
-        // SCROLL TO TOP BUTTON
-        // ========================================
-        const scrollTopBtn = document.querySelector('.scroll-top');
-
-        window.addEventListener('scroll', () => {
-            if (window.pageYOffset > 300) {
-                scrollTopBtn.classList.add('visible');
-            } else {
-                scrollTopBtn.classList.remove('visible');
-            }
-        });
-
-        // ========================================
-        // INIZIALIZZAZIONE
-        // ========================================
-        // Carica stats all'avvio
         loadStats();
-
-        // Aggiorna stats ogni 30 secondi
         setInterval(loadStats, 30000);
 
-        console.log('🚀 KyraBot Website caricato!');
-        console.log('📡 Stats URL:', API_URL);
+        // Scroll to top
+        const scrollTop = document.getElementById('scrollTop');
+        window.onscroll = () => {
+            scrollTop.classList.toggle('visible', window.scrollY > 300);
+        };
+        scrollTop.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Smooth scroll for links
+        document.querySelectorAll('a[href^="#"]').forEach(a => {
+            a.onclick = (e) => {
+                e.preventDefault();
+                document.querySelector(a.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+            };
+        });
     </script>
 </body>
 </html>
