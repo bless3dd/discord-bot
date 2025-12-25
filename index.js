@@ -15,7 +15,8 @@ const app = express();
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret-key';
 const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
-const ADMIN_IDS = (process.env.ADMIN_IDS || '').split(',').filter(Boolean);
+const GUILD_ID = process.env.GUILD_ID || '1219541590620770334'; // ID del tuo server
+const ADMIN_ROLE_ID = process.env.ADMIN_ROLE_ID; // ID del ruolo Moderatore
 
 // CORS configurato
 app.use(cors({
@@ -36,7 +37,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
-app.use(express.static('public')); // Servi file statici da /public
+app.use(express.static('public'));
 
 // ========================================
 // CLIENT DISCORD
@@ -54,9 +55,31 @@ const client = new Client({
 });
 
 client.commands = new Collection();
-
-// Rendi il client disponibile globalmente
 global.botClient = client;
+
+// ========================================
+// FUNZIONE VERIFICA RUOLO
+// ========================================
+async function hasAdminRole(userId) {
+    try {
+        if (!client.isReady()) {
+            console.log('⚠️ Bot non ancora pronto');
+            return false;
+        }
+
+        const guild = await client.guilds.fetch(GUILD_ID);
+        const member = await guild.members.fetch(userId);
+        
+        // Verifica se ha il ruolo admin
+        const hasRole = member.roles.cache.has(ADMIN_ROLE_ID);
+        
+        console.log(`🔐 Verifica ruolo per ${member.user.tag}: ${hasRole ? '✅' : '❌'}`);
+        return hasRole;
+    } catch (error) {
+        console.error('❌ Errore verifica ruolo:', error);
+        return false;
+    }
+}
 
 // ========================================
 // MIDDLEWARE AUTH
@@ -77,9 +100,11 @@ const verifyToken = (req, res, next) => {
     }
 };
 
-const verifyAdmin = (req, res, next) => {
-    if (!ADMIN_IDS.includes(req.user.id)) {
-        return res.status(403).json({ error: 'Accesso negato - Non sei admin' });
+const verifyAdmin = async (req, res, next) => {
+    const hasRole = await hasAdminRole(req.user.id);
+    
+    if (!hasRole) {
+        return res.status(403).json({ error: 'Accesso negato - Ruolo Moderatore richiesto' });
     }
     next();
 };
@@ -88,12 +113,10 @@ const verifyAdmin = (req, res, next) => {
 // API ENDPOINTS PUBBLICI
 // ========================================
 
-// Homepage
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Health check
 app.get('/health', (req, res) => {
     res.status(200).json({
         status: 'ok',
@@ -103,7 +126,6 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Statistiche bot (pubbliche)
 app.get('/api/stats', (req, res) => {
     try {
         if (!client.isReady()) {
@@ -146,14 +168,12 @@ app.get('/api/stats', (req, res) => {
 // API ENDPOINTS AUTH
 // ========================================
 
-// Discord OAuth2 Login
 app.get('/api/auth/discord', (req, res) => {
     const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/callback`;
-    const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=identify`;
+    const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=identify+guilds.members.read`;
     res.redirect(authUrl);
 });
 
-// Discord OAuth2 Callback
 app.get('/api/auth/callback', async (req, res) => {
     const { code } = req.query;
 
@@ -176,6 +196,7 @@ app.get('/api/auth/callback', async (req, res) => {
                 grant_type: 'authorization_code',
                 code: code,
                 redirect_uri: redirectUri,
+                scope: 'identify guilds.members.read'
             }),
         });
 
@@ -194,8 +215,10 @@ app.get('/api/auth/callback', async (req, res) => {
 
         const userData = await userResponse.json();
 
-        // Verifica se è admin
-        if (!ADMIN_IDS.includes(userData.id)) {
+        // Verifica se ha il ruolo admin
+        const hasRole = await hasAdminRole(userData.id);
+        
+        if (!hasRole) {
             return res.redirect('/?error=not_admin');
         }
 
@@ -211,7 +234,6 @@ app.get('/api/auth/callback', async (req, res) => {
             { expiresIn: '7d' }
         );
 
-        // Redirect alla dashboard con token
         res.redirect(`/dashboard.html?token=${jwtToken}`);
     } catch (error) {
         console.error('❌ Errore OAuth:', error);
@@ -219,8 +241,14 @@ app.get('/api/auth/callback', async (req, res) => {
     }
 });
 
-// Verifica token
-app.get('/api/auth/verify', verifyToken, (req, res) => {
+app.get('/api/auth/verify', verifyToken, async (req, res) => {
+    // Ri-verifica il ruolo ad ogni chiamata
+    const hasRole = await hasAdminRole(req.user.id);
+    
+    if (!hasRole) {
+        return res.status(403).json({ error: 'Ruolo Moderatore rimosso' });
+    }
+    
     res.json({
         id: req.user.id,
         username: req.user.username,
@@ -232,21 +260,19 @@ app.get('/api/auth/verify', verifyToken, (req, res) => {
 // API ENDPOINTS DASHBOARD (PROTETTI)
 // ========================================
 
-// Get commands
 app.get('/api/commands', verifyToken, verifyAdmin, (req, res) => {
     const commandsData = {};
     
     client.commands.forEach((cmd, name) => {
         commandsData[name] = {
             description: cmd.data?.description || 'Nessuna descrizione',
-            enabled: cmd.enabled !== false // Default true se non specificato
+            enabled: cmd.enabled !== false
         };
     });
 
     res.json(commandsData);
 });
 
-// Toggle command
 app.put('/api/commands/:commandName', verifyToken, verifyAdmin, (req, res) => {
     const { commandName } = req.params;
     const { enabled } = req.body;
@@ -262,7 +288,6 @@ app.put('/api/commands/:commandName', verifyToken, verifyAdmin, (req, res) => {
     res.json({ success: true, command: commandName, enabled });
 });
 
-// Send simple message
 app.post('/api/send-message', verifyToken, verifyAdmin, async (req, res) => {
     const { channelId, message } = req.body;
 
@@ -285,7 +310,6 @@ app.post('/api/send-message', verifyToken, verifyAdmin, async (req, res) => {
     }
 });
 
-// Send embed message
 app.post('/api/send-embed', verifyToken, verifyAdmin, async (req, res) => {
     const { channelId, embed } = req.body;
 
@@ -316,7 +340,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     console.log('='.repeat(60));
     console.log(`🌐 API SERVER ATTIVO`);
     console.log(`📡 Porta: ${PORT}`);
-    console.log(`🔐 Admin IDs: ${ADMIN_IDS.length > 0 ? ADMIN_IDS.join(', ') : 'NESSUNO CONFIGURATO!'}`);
+    console.log(`🛡️ Ruolo Admin: ${ADMIN_ROLE_ID || '⚠️ NON CONFIGURATO!'}`);
     console.log(`📊 Endpoints disponibili:`);
     console.log(`   → GET  /                      (homepage)`);
     console.log(`   → GET  /dashboard.html        (dashboard admin)`);
