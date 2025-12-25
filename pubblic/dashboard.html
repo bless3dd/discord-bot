@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KyraBot - Dashboard Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: #0a0118;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        /* Background Effects */
+        .bg-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 25vw;
+            font-weight: 900;
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(139, 92, 246, 0.2);
+            opacity: 0.05;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Header */
+        .dashboard-header {
+            background: rgba(139, 92, 246, 0.1);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-icon {
+            font-size: 2.5rem;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #8b5cf6;
+        }
+
+        .username {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .logout-btn {
+            padding: 0.8rem 1.5rem;
+            background: #ef4444;
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Container */
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 1rem 2rem;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            color: #8b5cf6;
+            border-bottom-color: #8b5cf6;
+        }
+
+        .tab:hover {
+            color: #fff;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, #fff, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 20px;
+            padding: 2.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: #8b5cf6;
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+
+        .stat-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Commands Management */
+        .commands-management {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+
+        .commands-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .command-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .command-item:hover {
+            border-color: rgba(139, 92, 246, 0.5);
+        }
+
+        .command-info h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: #8b5cf6;
+        }
+
+        .command-info p {
+            opacity: 0.7;
+            font-size: 0.95rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 32px;
+            background: #333;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #10b981;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 24px;
+            height: 24px;
+            background: #fff;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            left: 32px;
+        }
+
+        /* Message Forms */
+        .message-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .message-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+
+        .message-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #8b5cf6;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 0.3rem;
+            opacity: 0.6;
+            font-size: 0.85rem;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 10px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-group input[type="color"] {
+            height: 50px;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.5);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            display: none;
+            font-weight: 600;
+        }
+
+        .alert.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert.success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+
+        .alert.error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .loading {
+            text-align: center;
+            opacity: 0.6;
+            padding: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .message-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .tabs {
+                gap: 0.5rem;
+            }
+            
+            .tab {
+                padding: 0.8rem 1.2rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background -->
+    <div class="bg-text">ADMIN</div>
+
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="logo">
+            <span class="logo-icon">🤖</span>
+            <span>KyraBot Dashboard</span>
+        </div>
+        <div class="user-section">
+            <img src="" alt="Avatar" class="user-avatar" id="userAvatar">
+            <span class="username" id="username">Caricamento...</span>
+            <button class="logout-btn" id="logoutBtn">🚪 Logout</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Navigation Tabs -->
+        <nav class="tabs">
+            <button class="tab active" data-tab="overview">📊 Panoramica</button>
+            <button class="tab" data-tab="commands">⚙️ Comandi</button>
+            <button class="tab" data-tab="messages">💬 Messaggi</button>
+        </nav>
+
+        <!-- Tab: Overview -->
+        <div class="tab-content active" id="overview">
+            <h2 class="section-title">Dashboard Amministratori</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">🖥️</div>
+                    <div class="stat-number" id="dashServers">--</div>
+                    <div class="stat-label">Server Attivi</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-number" id="dashUsers">--</div>
+                    <div class="stat-label">Utenti Totali</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-number" id="dashCommands">--</div>
+                    <div class="stat-label">Comandi</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🟢</div>
+                    <div class="stat-number" id="dashStatus">Online</div>
+                    <div class="stat-label">Stato Bot</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Commands -->
+        <div class="tab-content" id="commands">
+            <h2 class="section-title">Gestione Comandi</h2>
+            <div class="commands-management">
+                <div class="commands-list" id="commandsList">
+                    <p class="loading">Caricamento comandi...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Messages -->
+        <div class="tab-content" id="messages">
+            <h2 class="section-title">Invio Messaggi</h2>
+            <div class="message-grid">
+                <!-- Simple Message -->
+                <div class="message-card">
+                    <h3>💬 Messaggio Semplice</h3>
+                    <form id="simpleForm">
+                        <div class="form-group">
+                            <label>ID Canale</label>
+                            <input type="text" id="simpleChannel" placeholder="123456789012345678" required>
+                            <small>Clic destro sul canale → Copia ID</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Messaggio</label>
+                            <textarea id="simpleMessage" placeholder="Scrivi il tuo messaggio..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn">📤 Invia Messaggio</button>
+                    </form>
+                    <div class="alert" id="simpleAlert"></div>
+                </div>
+
+                <!-- Embed Message -->
+                <div class="message-card">
+                    <h3>✨ Embed Avanzato</h3>
+                    <form id="embedForm">
+                        <div class="form-group">
+                            <label>ID Canale</label>
+                            <input type="text" id="embedChannel" placeholder="123456789012345678" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Titolo</label>
+                            <input type="text" id="embedTitle" placeholder="📢 Annuncio Importante">
+                        </div>
+                        <div class="form-group">
+                            <label>Descrizione</label>
+                            <textarea id="embedDesc" placeholder="Contenuto dell'annuncio..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Colore</label>
+                            <input type="color" id="embedColor" value="#8b5cf6">
+                        </div>
+                        <button type="submit" class="btn">🚀 Invia Embed</button>
+                    </form>
+                    <div class="alert" id="embedAlert"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        let userData = null;
+
+        // Tab Switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.onclick = () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            };
+        });
+
+        // Check Authentication on Load
+        window.onload = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlToken = urlParams.get('token');
+            
+            if (urlToken) {
+                localStorage.setItem('kyrabot_token', urlToken);
+                window.history.replaceState({}, document.title, window.location.pathname);
+                verifyToken();
+                return;
+            }
+
+            const savedToken = localStorage.getItem('kyrabot_token');
+            if (!savedToken) {
+                alert('⚠️ Devi effettuare il login per accedere alla dashboard');
+                window.location.href = '/';
+            } else {
+                verifyToken();
+            }
+        };
+
+        // Verify Token
+        async function verifyToken() {
+            const token = localStorage.getItem('kyrabot_token');
+            
+            try {
+                const res = await fetch(`${API_URL}/api/auth/verify`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    userData = await res.json();
+                    document.getElementById('username').textContent = userData.username;
+                    document.getElementById('userAvatar').src = userData.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png';
+                    loadDashboardData();
+                } else {
+                    localStorage.removeItem('kyrabot_token');
+                    alert('❌ Sessione scaduta. Effettua nuovamente il login.');
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                console.error('Errore verifica:', error);
+                localStorage.removeItem('kyrabot_token');
+                window.location.href = '/';
+            }
+        }
+
+        // Load Dashboard Data
+        async function loadDashboardData() {
+            await loadStats();
+            await loadCommands();
+        }
+
+        // Load Stats
+        async function loadStats() {
+            try {
+                const res = await fetch(`${API_URL}/api/stats`);
+                const data = await res.json();
+                
+                document.getElementById('dashServers').textContent = data.servers || 0;
+                document.getElementById('dashUsers').textContent = data.users || 0;
+                document.getElementById('dashCommands').textContent = data.commands || 0;
+                document.getElementById('dashStatus').textContent = data.online ? 'Online' : 'Offline';
+            } catch (error) {
+                console.error('Errore caricamento stats:', error);
+            }
+        }
+
+        // Load Commands
+        async function loadCommands() {
+            const token = localStorage.getItem('kyrabot_token');
+            
+            try {
+                const res = await fetch(`${API_URL}/api/commands`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const commandsData = await res.json();
+                renderCommands(commandsData);
+            } catch (error) {
+                console.error('Errore caricamento comandi:', error);
+                document.getElementById('commandsList').innerHTML = '<p class="loading">❌ Errore caricamento comandi</p>';
+            }
+        }
+
+        // Render Commands List
+        function renderCommands(commands) {
+            const list = document.getElementById('commandsList');
+            list.innerHTML = '';
+
+            if (Object.keys(commands).length === 0) {
+                list.innerHTML = '<p class="loading">Nessun comando disponibile</p>';
+                return;
+            }
+
+            Object.keys(commands).forEach(cmd => {
+                const item = document.createElement('div');
+                item.className = 'command-item';
+                item.innerHTML = `
+                    <div class="command-info">
+                        <h3>/${cmd}</h3>
+                        <p>${commands[cmd].description}</p>
+                    </div>
+                    <div class="toggle-switch ${commands[cmd].enabled ? 'active' : ''}" data-cmd="${cmd}">
+                        <div class="toggle-slider"></div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+
+            document.querySelectorAll('.toggle-switch').forEach(toggle => {
+                toggle.onclick = () => toggleCommand(toggle.dataset.cmd, commands);
+            });
+        }
+
+        // Toggle Command
+        async function toggleCommand(cmd, commands) {
+            const toggle = document.querySelector(`[data-cmd="${cmd}"]`);
+            const isActive = toggle.classList.contains('active');
+            const token = localStorage.getItem('kyrabot_token');
+
+            try {
+                const res = await fetch(`${API_URL}/api/commands/${cmd}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ enabled: !isActive })
+                });
+
+                if (res.ok) {
+                    toggle.classList.toggle('active');
+                    commands[cmd].enabled = !isActive;
+                } else {
+                    alert('❌ Errore nell\'aggiornamento del comando');
+                }
+            } catch (error) {
+                console.error('Errore toggle comando:', error);
+                alert('❌ Errore di connessione');
+            }
+        }
+
+        // Simple Message Form
+        document.getElementById('simpleForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const channel = document.getElementById('simpleChannel').value;
+            const message = document.getElementById('simpleMessage').value;
+            const token = localStorage.getItem('kyrabot_token');
+
+            try {
+                const res = await fetch(`${API_URL}/api/send-message`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ channelId: channel, message })
+                });
+
+                const data = await res.json();
+                showAlert('simpleAlert', data.success ? '✅ Messaggio inviato con successo!' : `❌ ${data.error}`, data.success ? 'success' : 'error');
+                
+                if (data.success) {
+                    document.getElementById('simpleMessage').value = '';
+                }
+            } catch (error) {
+                showAlert('simpleAlert', `❌ Errore: ${error.message}`, 'error');
+            }
+        };
+
+        // Embed Form
+        document.getElementById('embedForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const channel = document.getElementById('embedChannel').value;
+            const title = document.getElementById('embedTitle').value;
+            const description = document.getElementById('embedDesc').value;
+            const color = document.getElementById('embedColor').value;
+            const token = localStorage.getItem('kyrabot_token');
+
+            try {
+                const res = await fetch(`${API_URL}/api/send-embed`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        channelId: channel,
+                        embed: {
+                            title,
+                            description,
+                            color: parseInt(color.replace('#', ''), 16),
+                            timestamp: new Date().toISOString()
+                        }
+                    })
+                });
+
+                const data = await res.json();
+                showAlert('embedAlert', data.success ? '✅ Embed inviato con successo!' : `❌ ${data.error}`, data.success ? 'success' : 'error');
+                
+                if (data.success) {
+                    document.getElementById('embedTitle').value = '';
+                    document.getElementById('embedDesc').value = '';
+                }
+            } catch (error) {
+                showAlert('embedAlert', `❌ Errore: ${error.message}`, 'error');
+            }
+        };
+
+        // Show Alert
+        function showAlert(id, message, type) {
+            const alert = document.getElementById(id);
+            alert.textContent = message;
+            alert.className = `alert ${type} show`;
+            setTimeout(() => alert.classList.remove('show'), 5000);
+        }
+
+        // Logout
+        document.getElementById('logoutBtn').onclick = () => {
+            if (confirm('Sei sicuro di voler uscire?')) {
+                localStorage.removeItem('kyrabot_token');
+                window.location.href = '/';
+            }
+        };
+    </script>
+</body>
+</html>
