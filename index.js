@@ -2,27 +2,33 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const { TOKEN } = require('./config');
 const eventHandler = require('./events/eventHandler');
+const path = require('path');
 
 // ========================================
 // SETUP EXPRESS API
 // ========================================
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const app = express();
 
-// CORS configurato per permettere richieste da qualsiasi origine
+const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret-key';
+const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
+const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
+const ADMIN_IDS = (process.env.ADMIN_IDS || '').split(',').filter(Boolean);
+
+// CORS configurato
 app.use(cors({
     origin: '*',
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type'],
+    methods: ['GET', 'POST', 'PUT', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: false
 }));
 
-// Headers aggiuntivi per CORS
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     if (req.method === 'OPTIONS') {
         return res.sendStatus(200);
     }
@@ -30,6 +36,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+app.use(express.static('public')); // Servi file statici da /public
 
 // ========================================
 // CLIENT DISCORD
@@ -48,59 +55,45 @@ const client = new Client({
 
 client.commands = new Collection();
 
+// Rendi il client disponibile globalmente
+global.botClient = client;
+
 // ========================================
-// API ENDPOINTS
+// MIDDLEWARE AUTH
+// ========================================
+const verifyToken = (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+        return res.status(401).json({ error: 'Token mancante' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch (error) {
+        return res.status(401).json({ error: 'Token non valido' });
+    }
+};
+
+const verifyAdmin = (req, res, next) => {
+    if (!ADMIN_IDS.includes(req.user.id)) {
+        return res.status(403).json({ error: 'Accesso negato - Non sei admin' });
+    }
+    next();
+};
+
+// ========================================
+// API ENDPOINTS PUBBLICI
 // ========================================
 
 // Homepage
 app.get('/', (req, res) => {
-    res.status(200).send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>KyraBot API</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    background: #0a0118;
-                    color: #fff;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    height: 100vh;
-                    margin: 0;
-                }
-                .container {
-                    text-align: center;
-                    padding: 2rem;
-                    background: rgba(139, 92, 246, 0.1);
-                    border-radius: 20px;
-                    border: 1px solid rgba(167, 139, 250, 0.3);
-                }
-                h1 { color: #a78bfa; }
-                a {
-                    color: #6366f1;
-                    text-decoration: none;
-                    margin: 0 10px;
-                }
-                a:hover { color: #8b5cf6; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>✅ KyraBot API is Running!</h1>
-                <p>Available endpoints:</p>
-                <div>
-                    <a href="/health" target="_blank">/health</a>
-                    <a href="/api/stats" target="_blank">/api/stats</a>
-                </div>
-            </div>
-        </body>
-        </html>
-    `);
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Health check (critico per Railway)
+// Health check
 app.get('/health', (req, res) => {
     res.status(200).json({
         status: 'ok',
@@ -110,13 +103,13 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Statistiche bot
+// Statistiche bot (pubbliche)
 app.get('/api/stats', (req, res) => {
     try {
         if (!client.isReady()) {
             return res.status(200).json({
                 online: false,
-                message: 'Bot is starting or offline',
+                message: 'Bot is starting',
                 servers: 0,
                 users: 0,
                 commands: 0,
@@ -129,13 +122,11 @@ app.get('/api/stats', (req, res) => {
             return acc + guild.memberCount;
         }, 0);
 
-        const commandCount = client.commands.size || 16;
-
         res.status(200).json({
             online: true,
             servers: client.guilds.cache.size,
             users: totalUsers,
-            commands: commandCount,
+            commands: client.commands.size || 15,
             ping: client.ws.ping,
             uptime: Math.floor(client.uptime / 1000)
         });
@@ -146,34 +137,201 @@ app.get('/api/stats', (req, res) => {
             error: error.message,
             servers: 0,
             users: 0,
-            commands: 0,
-            ping: 0,
-            uptime: 0
+            commands: 0
         });
     }
 });
 
 // ========================================
-// AVVIA SERVER EXPRESS (PRIORITÀ)
+// API ENDPOINTS AUTH
+// ========================================
+
+// Discord OAuth2 Login
+app.get('/api/auth/discord', (req, res) => {
+    const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/callback`;
+    const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=identify`;
+    res.redirect(authUrl);
+});
+
+// Discord OAuth2 Callback
+app.get('/api/auth/callback', async (req, res) => {
+    const { code } = req.query;
+
+    if (!code) {
+        return res.redirect('/?error=no_code');
+    }
+
+    try {
+        const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/callback`;
+
+        // Scambia code per access token
+        const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                client_id: DISCORD_CLIENT_ID,
+                client_secret: DISCORD_CLIENT_SECRET,
+                grant_type: 'authorization_code',
+                code: code,
+                redirect_uri: redirectUri,
+            }),
+        });
+
+        const tokenData = await tokenResponse.json();
+
+        if (!tokenData.access_token) {
+            return res.redirect('/?error=no_token');
+        }
+
+        // Ottieni info utente
+        const userResponse = await fetch('https://discord.com/api/users/@me', {
+            headers: {
+                Authorization: `Bearer ${tokenData.access_token}`,
+            },
+        });
+
+        const userData = await userResponse.json();
+
+        // Verifica se è admin
+        if (!ADMIN_IDS.includes(userData.id)) {
+            return res.redirect('/?error=not_admin');
+        }
+
+        // Crea JWT token
+        const jwtToken = jwt.sign(
+            {
+                id: userData.id,
+                username: userData.username,
+                discriminator: userData.discriminator,
+                avatar: userData.avatar ? `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png` : null,
+            },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        // Redirect alla dashboard con token
+        res.redirect(`/dashboard.html?token=${jwtToken}`);
+    } catch (error) {
+        console.error('❌ Errore OAuth:', error);
+        res.redirect('/?error=auth_failed');
+    }
+});
+
+// Verifica token
+app.get('/api/auth/verify', verifyToken, (req, res) => {
+    res.json({
+        id: req.user.id,
+        username: req.user.username,
+        avatar: req.user.avatar,
+    });
+});
+
+// ========================================
+// API ENDPOINTS DASHBOARD (PROTETTI)
+// ========================================
+
+// Get commands
+app.get('/api/commands', verifyToken, verifyAdmin, (req, res) => {
+    const commandsData = {};
+    
+    client.commands.forEach((cmd, name) => {
+        commandsData[name] = {
+            description: cmd.data?.description || 'Nessuna descrizione',
+            enabled: cmd.enabled !== false // Default true se non specificato
+        };
+    });
+
+    res.json(commandsData);
+});
+
+// Toggle command
+app.put('/api/commands/:commandName', verifyToken, verifyAdmin, (req, res) => {
+    const { commandName } = req.params;
+    const { enabled } = req.body;
+
+    const command = client.commands.get(commandName);
+    
+    if (!command) {
+        return res.status(404).json({ error: 'Comando non trovato' });
+    }
+
+    command.enabled = enabled;
+    
+    res.json({ success: true, command: commandName, enabled });
+});
+
+// Send simple message
+app.post('/api/send-message', verifyToken, verifyAdmin, async (req, res) => {
+    const { channelId, message } = req.body;
+
+    try {
+        const channel = await client.channels.fetch(channelId);
+        
+        if (!channel) {
+            return res.status(404).json({ success: false, error: 'Canale non trovato' });
+        }
+
+        if (!channel.isTextBased()) {
+            return res.status(400).json({ success: false, error: 'Non è un canale di testo' });
+        }
+
+        await channel.send(message);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('❌ Errore invio messaggio:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Send embed message
+app.post('/api/send-embed', verifyToken, verifyAdmin, async (req, res) => {
+    const { channelId, embed } = req.body;
+
+    try {
+        const channel = await client.channels.fetch(channelId);
+        
+        if (!channel) {
+            return res.status(404).json({ success: false, error: 'Canale non trovato' });
+        }
+
+        if (!channel.isTextBased()) {
+            return res.status(400).json({ success: false, error: 'Non è un canale di testo' });
+        }
+
+        await channel.send({ embeds: [embed] });
+        res.json({ success: true });
+    } catch (error) {
+        console.error('❌ Errore invio embed:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ========================================
+// AVVIA SERVER EXPRESS
 // ========================================
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, '0.0.0.0', () => {
     console.log('='.repeat(60));
-    console.log(`🔡 API SERVER ATTIVO`);
+    console.log(`🌐 API SERVER ATTIVO`);
     console.log(`📡 Porta: ${PORT}`);
-    console.log(`🌐 Railway può connettersi`);
+    console.log(`🔐 Admin IDs: ${ADMIN_IDS.length > 0 ? ADMIN_IDS.join(', ') : 'NESSUNO CONFIGURATO!'}`);
     console.log(`📊 Endpoints disponibili:`);
-    console.log(`   → GET /              (homepage)`);
-    console.log(`   → GET /health        (health check)`);
-    console.log(`   → GET /api/stats     (statistiche bot)`);
+    console.log(`   → GET  /                      (homepage)`);
+    console.log(`   → GET  /dashboard.html        (dashboard admin)`);
+    console.log(`   → GET  /health                (health check)`);
+    console.log(`   → GET  /api/stats             (statistiche bot)`);
+    console.log(`   → GET  /api/auth/discord      (login)`);
+    console.log(`   → GET  /api/auth/callback     (OAuth callback)`);
+    console.log(`   → GET  /api/commands          (lista comandi)`);
+    console.log(`   → POST /api/send-message      (invia messaggio)`);
+    console.log(`   → POST /api/send-embed        (invia embed)`);
     console.log('='.repeat(60));
 });
 
 server.on('error', (error) => {
     console.error('❌ ERRORE CRITICO SERVER:', error);
-    if (error.code === 'EADDRINUSE') {
-        console.error(`❌ Porta ${PORT} già in uso!`);
-    }
 });
 
 // ========================================
@@ -181,7 +339,6 @@ server.on('error', (error) => {
 // ========================================
 console.log('\n🤖 Inizializzazione bot Discord...\n');
 
-// Event handlers
 try {
     eventHandler(client);
     console.log('✅ Event handlers caricati');
@@ -189,34 +346,30 @@ try {
     console.error('⚠️ Errore event handlers:', error.message);
 }
 
-// Voice status updater
 try {
     const voiceStatusUpdater = require('./events/voiceStatusUpdater');
     voiceStatusUpdater(client);
     console.log('✅ Voice Status Updater caricato');
 } catch (error) {
-    console.log('⚠️ Voice Status Updater non trovato, skip');
+    console.log('⚠️ Voice Status Updater non trovato');
 }
 
-// Member events
 try {
     const memberEvents = require('./events/memberEvents');
     memberEvents(client);
     console.log('✅ Member Events caricato');
 } catch (error) {
-    console.log('⚠️ Member Events non trovato, skip');
+    console.log('⚠️ Member Events non trovato');
 }
 
-// Command handler
 try {
     const commandHandler = require('./events/commandHandler');
     client.on('interactionCreate', async (interaction) => {
-        console.log('📢 Interazione ricevuta');
         await commandHandler(interaction);
     });
     console.log('✅ Command Handler registrato');
 } catch (error) {
-    console.log('⚠️ Command Handler non trovato, skip');
+    console.log('⚠️ Command Handler non trovato');
 }
 
 // ========================================
@@ -230,23 +383,18 @@ client.login(TOKEN)
     })
     .catch(error => {
         console.error('❌ ERRORE LOGIN DISCORD:', error.message);
-        console.error('⚠️ Verifica il TOKEN nelle variabili Railway');
-        console.log('ℹ️ API continua a funzionare anche senza bot');
     });
 
-// ========================================
-// EVENTI BOT
-// ========================================
 client.once('ready', () => {
     console.log('\n' + '='.repeat(60));
     console.log('🎉 BOT DISCORD ONLINE E OPERATIVO!');
     console.log('='.repeat(60));
     console.log(`👤 Bot: ${client.user.tag}`);
     console.log(`🆔 ID: ${client.user.id}`);
-    console.log(`🔢 Server: ${client.guilds.cache.size}`);
+    console.log(`📢 Server: ${client.guilds.cache.size}`);
     console.log(`👥 Utenti totali: ${client.guilds.cache.reduce((acc, g) => acc + g.memberCount, 0)}`);
-    console.log(`⚡ Comandi: ${client.commands.size || 16}`);
-    console.log(`📡 Ping WebSocket: ${client.ws.ping}ms`);
+    console.log(`⚡ Comandi: ${client.commands.size}`);
+    console.log(`📡 Ping: ${client.ws.ping}ms`);
     console.log('='.repeat(60) + '\n');
 });
 
@@ -256,14 +404,6 @@ client.on('error', error => {
 
 client.on('warn', info => {
     console.warn('⚠️ Discord Warning:', info);
-});
-
-client.on('shardDisconnect', (event, id) => {
-    console.warn(`⚠️ Shard ${id} disconnesso`);
-});
-
-client.on('shardReconnecting', id => {
-    console.log(`🔄 Shard ${id} riconnessione...`);
 });
 
 // ========================================
