@@ -26,7 +26,7 @@ window.onload = () => {
     const savedToken = localStorage.getItem('kyrabot_token');
     if (!savedToken) {
         alert('⚠️ Devi effettuare il login per accedere alla dashboard');
-        window.location.href = '/';
+        window.location.href = './index.html';
     } else {
         verifyToken();
     }
@@ -49,12 +49,12 @@ async function verifyToken() {
         } else {
             localStorage.removeItem('kyrabot_token');
             alert('❌ Sessione scaduta. Effettua nuovamente il login.');
-            window.location.href = '/';
+            window.location.href = './index.html';
         }
     } catch (error) {
         console.error('Errore verifica:', error);
         localStorage.removeItem('kyrabot_token');
-        window.location.href = '/';
+        window.location.href = './index.html';
     }
 }
 
@@ -233,6 +233,6 @@ function showAlert(id, message, type) {
 document.getElementById('logoutBtn').onclick = () => {
     if (confirm('Sei sicuro di voler uscire?')) {
         localStorage.removeItem('kyrabot_token');
-        window.location.href = '/';
+        window.location.href = './index.html';
     }
 };
