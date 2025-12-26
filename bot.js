@@ -67,7 +67,7 @@ const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://discord-bot-bot-discord-kira.up.railway.app/api/auth/callback';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://bless3dd.github.io/discord-bot';
 const JWT_SECRET = process.env.JWT_SECRET || 'chiave-segreta-cambiami';
-const GUILD_ID = process.env.GUILD_ID; // ID del tuo server Discord
+const GUILD_ID = process.env.GUILD_ID;
 const MOD_ROLE_ID = '1224070785325596792'; // ID del ruolo Moderatore
 
 app.use(cors());
@@ -89,7 +89,28 @@ app.get('/', (req, res) => {
     });
 });
 
-// Callback OAuth (MODIFICATO CON CONTROLLO RUOLO)
+// Stats pubbliche
+app.get('/api/stats', (req, res) => {
+    try {
+        res.json({
+            servers: client.guilds.cache.size,
+            users: client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0),
+            commands: client.commands.size,
+            online: client.isReady()
+        });
+    } catch (error) {
+        console.error('Errore stats:', error);
+        res.status(500).json({ 
+            servers: 0,
+            users: 0,
+            commands: 0,
+            online: false,
+            error: 'Errore nel recupero delle statistiche'
+        });
+    }
+});
+
+// Callback OAuth (CON CONTROLLO RUOLO MODERATORE)
 app.get('/api/auth/callback', async (req, res) => {
     const { code } = req.query;
 
@@ -166,7 +187,7 @@ app.get('/api/auth/callback', async (req, res) => {
                 <body>
                     <div class="error-box">
                         <h1>⚙️ Errore di Configurazione</h1>
-                        <p>Il server non è configurato correttamente. Contatta l'amministratore.</p>
+                        <p>Il server non è configurato correttamente. GUILD_ID mancante.</p>
                         <a href="${FRONTEND_URL}/index.html">← Torna alla Home</a>
                     </div>
                 </body>
@@ -182,6 +203,7 @@ app.get('/api/auth/callback', async (req, res) => {
             const hasModRole = member.roles.cache.has(MOD_ROLE_ID);
 
             if (!hasModRole) {
+                console.log(`❌ Accesso negato per ${userData.username}#${userData.discriminator} - Ruolo Moderatore mancante`);
                 return res.status(403).send(`
                     <!DOCTYPE html>
                     <html lang="it">
@@ -295,7 +317,7 @@ app.get('/api/auth/callback', async (req, res) => {
             res.redirect(`${FRONTEND_URL}/dashboard.html?token=${token}`);
 
         } catch (guildError) {
-            console.error('Errore verifica ruolo:', guildError);
+            console.error('❌ Errore verifica ruolo:', guildError);
             return res.status(500).send(`
                 <!DOCTYPE html>
                 <html lang="it">
@@ -349,6 +371,9 @@ app.get('/api/auth/callback', async (req, res) => {
                         <h1>❌ Errore</h1>
                         <p>Non sei nel server Discord o il bot non può verificare il tuo ruolo.</p>
                         <code>${guildError.message}</code>
+                        <p style="font-size: 0.9rem; opacity: 0.7; margin-top: 1rem;">
+                            Assicurati di essere nel server Discord e che il bot abbia i permessi necessari.
+                        </p>
                         <a href="${FRONTEND_URL}/index.html">← Torna alla Home</a>
                     </div>
                 </body>
@@ -357,7 +382,7 @@ app.get('/api/auth/callback', async (req, res) => {
         }
 
     } catch (error) {
-        console.error('Errore OAuth:', error.response?.data || error.message);
+        console.error('❌ Errore OAuth:', error.response?.data || error.message);
         res.redirect(`${FRONTEND_URL}/index.html?error=auth_failed`);
     }
 });
@@ -383,16 +408,6 @@ app.get('/api/auth/verify', verifyToken, (req, res) => {
         username: req.user.username,
         discriminator: req.user.discriminator,
         avatar: req.user.avatar
-    });
-});
-
-// Stats
-app.get('/api/stats', (req, res) => {
-    res.json({
-        servers: client.guilds.cache.size,
-        users: client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0),
-        commands: client.commands.size,
-        online: client.isReady()
     });
 });
 
