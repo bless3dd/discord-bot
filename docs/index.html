@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KyraBot - Discord Bot Premium</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="bg-text">KYRA</div>
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+
+    <header>
+        <div class="logo">
+            <svg class="logo-img" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:var(--primary)"/>
+                        <stop offset="100%" style="stop-color:var(--secondary)"/>
+                    </linearGradient>
+                </defs>
+                <circle cx="250" cy="250" r="200" fill="none" stroke="url(#logoGrad)" stroke-width="3" opacity="0.4"/>
+                <g transform="translate(250, 250)">
+                    <polygon points="0,-120 104,-60 104,60 0,120 -104,60 -104,-60" fill="none" stroke="url(#logoGrad)" stroke-width="3" opacity="0.6"/>
+                    <path d="M -30,-60 L -30,60 L -20,60 L -20,5 L 35,60 L 50,60 L -10,-5 L 45,-60 L 30,-60 L -20,-15 L -20,-60 Z" fill="url(#logoGrad)"/>
+                </g>
+            </svg>
+            <span>KyraBot</span>
+        </div>
+        <div class="header-right">
+            <div class="status">
+                <div class="status-dot"></div>
+                <span id="statusText">Caricamento...</span>
+            </div>
+            <div class="latency-indicator">
+                <div class="latency-dot" id="latencyDot"></div>
+                <span class="latency-text" id="latencyText">Calcolo...</span>
+            </div>
+            <a href="/dashboard.html" class="dashboard-btn">📊 Dashboard</a>
+            <button class="theme-toggle" id="themeBtn">🎨</button>
+        </div>
+    </header>
+
+    <div class="theme-panel" id="themePanel">
+        <div class="theme-panel-header">
+            <h3>🎨 Scegli tema</h3>
+            <button class="close-panel" id="closeBtn">×</button>
+        </div>
+        <div class="theme-grid">
+            <button class="theme-option active" data-theme="purple">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #8b5cf6, #6366f1)"></div>
+                <span>Viola</span>
+            </button>
+            <button class="theme-option" data-theme="cyan">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #06b6d4, #0891b2)"></div>
+                <span>Ciano</span>
+            </button>
+            <button class="theme-option" data-theme="pink">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #ec4899, #d946ef)"></div>
+                <span>Rosa</span>
+            </button>
+            <button class="theme-option" data-theme="green">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #10b981, #059669)"></div>
+                <span>Verde</span>
+            </button>
+            <button class="theme-option" data-theme="orange">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #f97316, #ea580c)"></div>
+                <span>Arancio</span>
+            </button>
+            <button class="theme-option" data-theme="blue">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #3b82f6, #2563eb)"></div>
+                <span>Blu</span>
+            </button>
+            <button class="theme-option" data-theme="red">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #ef4444, #dc2626)"></div>
+                <span>Rosso</span>
+            </button>
+            <button class="theme-option" data-theme="gold">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #f59e0b, #d97706)"></div>
+                <span>Oro</span>
+            </button>
+        </div>
+    </div>
+
+    <section class="hero">
+        <h1>KyraBot</h1>
+        <p>Il Bot Discord di Nuova Generazione - Potenza, Eleganza e Intelligenza Artificiale</p>
+        <div class="cta-buttons">
+            <a href="https://discord.gg/uwQFf56hD7" target="_blank" rel="noopener noreferrer" class="cta-button discord">
+                <svg class="discord-icon" viewBox="0 0 71 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M60.1045 4.8978C55.5792 2.8214 50.7265 1.2916 45.6527 0.41542C45.5603 0.39851 45.468 0.440769 45.4204 0.525289C44.7963 1.6353 44.105 3.0834 43.6209 4.2216C38.1637 3.4046 32.7345 3.4046 27.3892 4.2216C26.905 3.0581 26.1886 1.6353 25.5617 0.525289C25.5141 0.443589 25.4218 0.40133 25.3294 0.41542C20.2584 1.2888 15.4057 2.8186 10.8776 4.8978C10.8384 4.9147 10.8048 4.9429 10.7825 4.9795C1.57795 18.7309 -0.943561 32.1443 0.293408 45.3914C0.299005 45.4562 0.335386 45.5182 0.385761 45.5576C6.45866 50.0174 12.3413 52.7249 18.1147 54.5195C18.2071 54.5477 18.305 54.5139 18.3638 54.4378C19.7295 52.5728 20.9469 50.6063 21.9907 48.5383C22.0523 48.4172 21.9935 48.2735 21.8676 48.2256C19.9366 47.4931 18.0979 46.6 16.3292 45.5858C16.1893 45.5041 16.1781 45.304 16.3068 45.2082C16.679 44.9293 17.0513 44.6391 17.4067 44.3461C17.471 44.2926 17.5606 44.2813 17.6362 44.3151C29.2558 49.6202 41.8354 49.6202 53.3179 44.3151C53.3935 44.2785 53.4831 44.2898 53.5502 44.3433C53.9057 44.6363 54.2779 44.9293 54.6529 45.2082C54.7816 45.304 54.7732 45.5041 54.6333 45.5858C52.8646 46.6197 51.0259 47.4931 49.0921 48.2228C48.9662 48.2707 48.9102 48.4172 48.9718 48.5383C50.038 50.6034 51.2554 52.5699 52.5959 54.435C52.6519 54.5139 52.7526 54.5477 52.845 54.5195C58.6464 52.7249 64.529 50.0174 70.6019 45.5576C70.6551 45.5182 70.6887 45.459 70.6943 45.3942C72.1747 30.0791 68.2147 16.7757 60.1968 4.9823C60.1772 4.9429 60.1437 4.9147 60.1045 4.8978ZM23.7259 37.3253C20.2276 37.3253 17.3451 34.1136 17.3451 30.1693C17.3451 26.225 20.1717 23.0133 23.7259 23.0133C27.308 23.0133 30.1626 26.2532 30.1066 30.1693C30.1066 34.1136 27.28 37.3253 23.7259 37.3253ZM47.3178 37.3253C43.8196 37.3253 40.9371 34.1136 40.9371 30.1693C40.9371 26.225 43.7636 23.0133 47.3178 23.0133C50.9 23.0133 53.7545 26.2532 53.6986 30.1693C53.6986 34.1136 50.9 37.3253 47.3178 37.3253Z" fill="currentColor"/>
+                </svg>
+                Unisciti al Server
+            </a>
+            <a href="#features" class="cta-button">Esplora Features</a>
+            <a href="#commands" class="cta-button secondary">Vedi Comandi</a>
+        </div>
+    </section>
+
+    <section class="stats">
+        <div class="stat-card">
+            <div class="stat-number" id="servers">--</div>
+            <div class="stat-label">Server Attivi</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="users">--</div>
+            <div class="stat-label">Utenti Attivi</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="commands">--</div>
+            <div class="stat-label">Comandi</div>
+        </div>
+    </section>
+
+    <section class="section" id="features">
+        <h2>✨ Funzionalità Premium</h2>
+        <div class="grid features-grid">
+            <div class="card">
+                <div class="feature-icon">🛡️</div>
+                <div class="feature-title">Moderazione Avanzata</div>
+                <div class="feature-desc">Sistema completo con ban, kick, timeout e gestione warning automatica.</div>
+            </div>
+            <div class="card">
+                <div class="feature-icon">🎤</div>
+                <div class="feature-title">Voice Tracking</div>
+                <div class="feature-desc">Monitora in tempo reale chi è connesso ai canali vocali.</div>
+            </div>
+            <div class="card">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">Analytics Server</div>
+                <div class="feature-desc">Statistiche avanzate e informazioni complete sugli utenti.</div>
+            </div>
+            <div class="card">
+                <div class="feature-icon">🎮</div>
+                <div class="feature-title">Utilità & Fun</div>
+                <div class="feature-desc">Sondaggi interattivi, 8ball magica, avatar viewer e molto altro.</div>
+            </div>
+            <div class="card">
+                <div class="feature-icon">💬</div>
+                <div class="feature-title">Gestione Messaggi</div>
+                <div class="feature-desc">Pulizia bulk, slow mode intelligente e controllo totale.</div>
+            </div>
+            <div class="card">
+                <div class="feature-icon">👋</div>
+                <div class="feature-title">Welcome System</div>
+                <div class="feature-desc">Messaggi automatici personalizzati per nuovi membri.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="commands">
+        <h2>📋 Comandi Disponibili</h2>
+        <div class="grid commands-grid">
+            <div class="card"><div class="command-name">/ping</div><div class="command-desc">Controlla la latenza del bot</div></div>
+            <div class="card"><div class="command-name">/help</div><div class="command-desc">Mostra tutti i comandi disponibili</div></div>
+            <div class="card"><div class="command-name">/ban</div><div class="command-desc">Banna un utente dal server</div></div>
+            <div class="card"><div class="command-name">/unban</div><div class="command-desc">Rimuove il ban a un utente</div></div>
+            <div class="card"><div class="command-name">/kick</div><div class="command-desc">Espelle un utente dal server</div></div>
+            <div class="card"><div class="command-name">/timeout</div><div class="command-desc">Mette in timeout un utente</div></div>
+            <div class="card"><div class="command-name">/warn</div><div class="command-desc">Avverte un utente</div></div>
+            <div class="card"><div class="command-name">/warnings</div><div class="command-desc">Visualizza gli avvertimenti</div></div>
+            <div class="card"><div class="command-name">/clear</div><div class="command-desc">Elimina messaggi in bulk</div></div>
+            <div class="card"><div class="command-name">/slowmode</div><div class="command-desc">Imposta la modalità lenta</div></div>
+            <div class="card"><div class="command-name">/poll</div><div class="command-desc">Crea un sondaggio interattivo</div></div>
+            <div class="card"><div class="command-name">/8ball</div><div class="command-desc">Consulta la palla magica</div></div>
+            <div class="card"><div class="command-name">/say</div><div class="command-desc">Fai ripetere un messaggio al bot</div></div>
+            <div class="card"><div class="command-name">/userinfo</div><div class="command-desc">Info dettagliate su un utente</div></div>
+            <div class="card"><div class="command-name">/serverinfo</div><div class="command-desc">Info complete sul server</div></div>
+            <div class="card"><div class="command-name">/avatar</div><div class="command-desc">Mostra l'avatar di un utente</div></div>
+        </div>
+    </section>
+
+    <footer>
+        <p>🤖 KyraBot - Sviluppato con ❤️ per la gestione perfetta del tuo server Discord</p>
+        <p style="margin-top: 1rem;">© 2026 KyraBot. Tutti i diritti riservati.</p>
+    </footer>
+
+    <div class="scroll-top" id="scrollTop">↑</div>
+
+    <script src="script.js"></script>
+</body>
+</html>
