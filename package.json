@@ -1,19 +1,20 @@
 {
-  "name": "discord-bot",
-  "version": "2.0.0",
-  "description": "Bot Discord di moderazione con Dashboard Admin",
-  "main": "index.js",
+  "name": "kyrabot",
+  "version": "1.0.0",
+  "description": "KyraBot - Discord Bot con Dashboard Web",
+  "main": "bot.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node bot.js",
+    "dev": "nodemon bot.js",
+    "web": "node server.js"
   },
   "dependencies": {
-    "axios": "^1.13.2",
-    "cors": "^2.8.5",
     "discord.js": "^14.14.1",
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3"
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "axios": "^1.6.2",
+    "jsonwebtoken": "^9.0.2",
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
