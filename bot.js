@@ -51,6 +51,10 @@ if (fs.existsSync(eventsPath)) {
 // Login bot Discord
 client.login(process.env.DISCORD_TOKEN).catch(console.error);
 
+client.on('ready', () => {
+    console.log(`✅ Bot connesso come ${client.user.tag}`);
+});
+
 // ========================
 // EXPRESS WEB SERVER
 // ========================
@@ -60,10 +64,11 @@ const PORT = process.env.PORT || 3000;
 // Configurazione
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
-const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || `https://discord-bot-bot-discord-kira.up.railway.app/api/auth/callback`;
+const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://discord-bot-bot-discord-kira.up.railway.app/api/auth/callback';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://bless3dd.github.io/discord-bot';
 const JWT_SECRET = process.env.JWT_SECRET || 'chiave-segreta-cambiami';
-const ADMIN_IDS = process.env.ADMIN_IDS ? process.env.ADMIN_IDS.split(',') : [];
+const GUILD_ID = process.env.GUILD_ID; // ID del tuo server Discord
+const MOD_ROLE_ID = '1224070785325596792'; // ID del ruolo Moderatore
 
 app.use(cors());
 app.use(express.json());
@@ -75,21 +80,25 @@ app.use(express.static(path.join(__dirname, 'docs')));
 // API ENDPOINTS
 // ========================
 
-// Login OAuth Discord
-app.get('/api/auth/login', (req, res) => {
-    const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT_URI)}&response_type=code&scope=identify%20email%20guilds`;
-    res.redirect(discordAuthUrl);
+// Health check
+app.get('/', (req, res) => {
+    res.json({ 
+        status: 'KyraBot API Online', 
+        version: '1.0.0',
+        bot: client.isReady() ? 'Online' : 'Offline'
+    });
 });
 
-// Callback OAuth
+// Callback OAuth (MODIFICATO CON CONTROLLO RUOLO)
 app.get('/api/auth/callback', async (req, res) => {
     const { code } = req.query;
 
     if (!code) {
-        return res.redirect(`${FRONTEND_URL}?error=no_code`);
+        return res.redirect(`${FRONTEND_URL}/index.html?error=no_code`);
     }
 
     try {
+        // Ottieni access token
         const tokenResponse = await axios.post('https://discord.com/api/oauth2/token', 
             new URLSearchParams({
                 client_id: DISCORD_CLIENT_ID,
@@ -105,32 +114,251 @@ app.get('/api/auth/callback', async (req, res) => {
 
         const { access_token } = tokenResponse.data;
 
+        // Ottieni dati utente
         const userResponse = await axios.get('https://discord.com/api/users/@me', {
             headers: { Authorization: `Bearer ${access_token}` }
         });
 
         const userData = userResponse.data;
 
-        // Verifica admin
-        if (!ADMIN_IDS.includes(userData.id)) {
-            return res.redirect(`${FRONTEND_URL}?error=unauthorized`);
+        // Verifica se ha il ruolo Moderatore nel server
+        if (!GUILD_ID) {
+            console.error('❌ GUILD_ID non configurato nelle variabili d\'ambiente');
+            return res.status(500).send(`
+                <!DOCTYPE html>
+                <html lang="it">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Errore Configurazione - KyraBot</title>
+                    <style>
+                        body {
+                            font-family: 'Inter', sans-serif;
+                            background: #0a0118;
+                            color: white;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                            padding: 2rem;
+                        }
+                        .error-box {
+                            background: rgba(239, 68, 68, 0.1);
+                            border: 2px solid #ef4444;
+                            border-radius: 20px;
+                            padding: 3rem;
+                            text-align: center;
+                            max-width: 600px;
+                        }
+                        h1 { color: #ef4444; margin-bottom: 1rem; }
+                        p { font-size: 1.1rem; margin-bottom: 2rem; }
+                        a {
+                            display: inline-block;
+                            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+                            padding: 1rem 2rem;
+                            border-radius: 50px;
+                            color: white;
+                            text-decoration: none;
+                            font-weight: bold;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="error-box">
+                        <h1>⚙️ Errore di Configurazione</h1>
+                        <p>Il server non è configurato correttamente. Contatta l'amministratore.</p>
+                        <a href="${FRONTEND_URL}/index.html">← Torna alla Home</a>
+                    </div>
+                </body>
+                </html>
+            `);
         }
 
-        const token = jwt.sign(
-            {
-                id: userData.id,
-                username: userData.username,
-                discriminator: userData.discriminator,
-                avatar: userData.avatar
-            },
-            JWT_SECRET,
-            { expiresIn: '7d' }
-        );
+        try {
+            const guild = await client.guilds.fetch(GUILD_ID);
+            const member = await guild.members.fetch(userData.id);
+            
+            // Controlla se l'utente ha il ruolo Moderatore tramite ID
+            const hasModRole = member.roles.cache.has(MOD_ROLE_ID);
 
-        res.redirect(`${FRONTEND_URL}/dashboard.html?token=${token}`);
+            if (!hasModRole) {
+                return res.status(403).send(`
+                    <!DOCTYPE html>
+                    <html lang="it">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Accesso Negato - KyraBot</title>
+                        <style>
+                            * {
+                                margin: 0;
+                                padding: 0;
+                                box-sizing: border-box;
+                            }
+                            body {
+                                font-family: 'Inter', 'Segoe UI', sans-serif;
+                                background: #0a0118;
+                                color: white;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                min-height: 100vh;
+                                padding: 2rem;
+                            }
+                            .error-box {
+                                background: rgba(239, 68, 68, 0.1);
+                                border: 2px solid rgba(239, 68, 68, 0.5);
+                                border-radius: 20px;
+                                padding: 3rem;
+                                text-align: center;
+                                max-width: 600px;
+                                backdrop-filter: blur(10px);
+                                animation: slideIn 0.5s ease;
+                            }
+                            @keyframes slideIn {
+                                from {
+                                    opacity: 0;
+                                    transform: translateY(-30px);
+                                }
+                                to {
+                                    opacity: 1;
+                                    transform: translateY(0);
+                                }
+                            }
+                            .icon {
+                                font-size: 5rem;
+                                margin-bottom: 1.5rem;
+                            }
+                            h1 {
+                                color: #ef4444;
+                                margin-bottom: 1.5rem;
+                                font-size: 2.5rem;
+                            }
+                            p {
+                                font-size: 1.2rem;
+                                margin-bottom: 2.5rem;
+                                line-height: 1.6;
+                                opacity: 0.9;
+                            }
+                            strong {
+                                color: #8b5cf6;
+                            }
+                            a {
+                                display: inline-block;
+                                background: linear-gradient(135deg, #8b5cf6, #6366f1);
+                                padding: 1.2rem 2.5rem;
+                                border-radius: 50px;
+                                color: white;
+                                text-decoration: none;
+                                font-weight: bold;
+                                font-size: 1.1rem;
+                                transition: all 0.3s ease;
+                                box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+                            }
+                            a:hover {
+                                transform: translateY(-5px);
+                                box-shadow: 0 15px 40px rgba(139, 92, 246, 0.5);
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="error-box">
+                            <div class="icon">🚫</div>
+                            <h1>Accesso Negato</h1>
+                            <p>
+                                Devi avere il ruolo <strong>"Moderatore"</strong> 
+                                nel server Discord per accedere alla dashboard amministrativa.
+                            </p>
+                            <p style="font-size: 1rem; opacity: 0.7;">
+                                Contatta un amministratore del server se pensi che questo sia un errore.
+                            </p>
+                            <a href="${FRONTEND_URL}/index.html">← Torna alla Home</a>
+                        </div>
+                    </body>
+                    </html>
+                `);
+            }
+
+            // Utente autorizzato - crea JWT token
+            const token = jwt.sign(
+                {
+                    id: userData.id,
+                    username: userData.username,
+                    discriminator: userData.discriminator,
+                    avatar: userData.avatar ? `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png'
+                },
+                JWT_SECRET,
+                { expiresIn: '7d' }
+            );
+
+            console.log(`✅ Accesso autorizzato per ${userData.username}#${userData.discriminator}`);
+            res.redirect(`${FRONTEND_URL}/dashboard.html?token=${token}`);
+
+        } catch (guildError) {
+            console.error('Errore verifica ruolo:', guildError);
+            return res.status(500).send(`
+                <!DOCTYPE html>
+                <html lang="it">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Errore - KyraBot</title>
+                    <style>
+                        body {
+                            font-family: 'Inter', sans-serif;
+                            background: #0a0118;
+                            color: white;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                            padding: 2rem;
+                        }
+                        .error-box {
+                            background: rgba(239, 68, 68, 0.1);
+                            border: 2px solid #ef4444;
+                            border-radius: 20px;
+                            padding: 3rem;
+                            text-align: center;
+                            max-width: 600px;
+                        }
+                        h1 { color: #ef4444; margin-bottom: 1rem; }
+                        p { font-size: 1.1rem; margin-bottom: 2rem; line-height: 1.6; }
+                        code {
+                            background: rgba(0,0,0,0.3);
+                            padding: 0.5rem 1rem;
+                            border-radius: 8px;
+                            display: block;
+                            margin: 1rem 0;
+                            font-size: 0.9rem;
+                            color: #fbbf24;
+                        }
+                        a {
+                            display: inline-block;
+                            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+                            padding: 1rem 2rem;
+                            border-radius: 50px;
+                            color: white;
+                            text-decoration: none;
+                            font-weight: bold;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="error-box">
+                        <h1>❌ Errore</h1>
+                        <p>Non sei nel server Discord o il bot non può verificare il tuo ruolo.</p>
+                        <code>${guildError.message}</code>
+                        <a href="${FRONTEND_URL}/index.html">← Torna alla Home</a>
+                    </div>
+                </body>
+                </html>
+            `);
+        }
+
     } catch (error) {
         console.error('Errore OAuth:', error.response?.data || error.message);
-        res.redirect(`${FRONTEND_URL}?error=auth_failed`);
+        res.redirect(`${FRONTEND_URL}/index.html?error=auth_failed`);
     }
 });
 
@@ -154,7 +382,7 @@ app.get('/api/auth/verify', verifyToken, (req, res) => {
         id: req.user.id,
         username: req.user.username,
         discriminator: req.user.discriminator,
-        avatar: req.user.avatar ? `https://cdn.discordapp.com/avatars/${req.user.id}/${req.user.avatar}.png` : null
+        avatar: req.user.avatar
     });
 });
 
@@ -227,11 +455,19 @@ app.post('/api/send-embed', verifyToken, async (req, res) => {
 
 // Fallback per SPA
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'docs', 'index.html'));
+    const indexPath = path.join(__dirname, 'docs', 'index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).json({ error: 'Page not found' });
+    }
 });
 
 // Avvia server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`🌐 Server web avviato sulla porta ${PORT}`);
+    console.log(`📡 Redirect URI: ${DISCORD_REDIRECT_URI}`);
+    console.log(`🌍 Frontend URL: ${FRONTEND_URL}`);
+    console.log(`🛡️  Ruolo Moderatore ID: ${MOD_ROLE_ID}`);
     console.log(`🤖 Bot Discord in avvio...`);
 });
