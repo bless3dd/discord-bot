@@ -1,180 +1,202 @@
-// Callback OAuth
-app.get('/api/auth/callback', async (req, res) => {
-    const { code } = req.query;
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KyraBot - Discord Bot Premium</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="bg-text">KYRA</div>
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
 
-    if (!code) {
-        return res.redirect(`${FRONTEND_URL}/index.html?error=no_code`);
-    }
+    <header>
+        <div class="logo">
+            <svg class="logo-img" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:var(--primary)"/>
+                        <stop offset="100%" style="stop-color:var(--secondary)"/>
+                    </linearGradient>
+                </defs>
+                <circle cx="250" cy="250" r="200" fill="none" stroke="url(#logoGrad)" stroke-width="3" opacity="0.4"/>
+                <g transform="translate(250, 250)">
+                    <polygon points="0,-120 104,-60 104,60 0,120 -104,60 -104,-60" fill="none" stroke="url(#logoGrad)" stroke-width="3" opacity="0.6"/>
+                    <path d="M -30,-60 L -30,60 L -20,60 L -20,5 L 35,60 L 50,60 L -10,-5 L 45,-60 L 30,-60 L -20,-15 L -20,-60 Z" fill="url(#logoGrad)"/>
+                </g>
+            </svg>
+            <span>KyraBot</span>
+        </div>
+        <div class="header-right">
+            <div class="status">
+                <div class="status-dot"></div>
+                <span id="statusText">Caricamento...</span>
+            </div>
+            <div class="latency-indicator">
+                <div class="latency-dot" id="latencyDot"></div>
+                <span class="latency-text" id="latencyText">Calcolo...</span>
+            </div>
+            <button class="theme-toggle" id="themeBtn">🎨</button>
+        </div>
+    </header>
 
-    try {
-        // Ottieni access token
-        const tokenResponse = await axios.post('https://discord.com/api/oauth2/token', 
-            new URLSearchParams({
-                client_id: DISCORD_CLIENT_ID,
-                client_secret: DISCORD_CLIENT_SECRET,
-                grant_type: 'authorization_code',
-                code: code,
-                redirect_uri: DISCORD_REDIRECT_URI
-            }), 
-            {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-            }
-        );
+    <div class="theme-panel" id="themePanel">
+        <div class="theme-panel-header">
+            <h3>🎨 Scegli tema</h3>
+            <button class="close-panel" id="closeBtn">×</button>
+        </div>
+        <div class="theme-grid">
+            <button class="theme-option active" data-theme="purple">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #8b5cf6, #6366f1)"></div>
+                <span>Viola</span>
+            </button>
+            <button class="theme-option" data-theme="cyan">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #06b6d4, #0891b2)"></div>
+                <span>Ciano</span>
+            </button>
+            <button class="theme-option" data-theme="pink">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #ec4899, #d946ef)"></div>
+                <span>Rosa</span>
+            </button>
+            <button class="theme-option" data-theme="green">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #10b981, #059669)"></div>
+                <span>Verde</span>
+            </button>
+            <button class="theme-option" data-theme="orange">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #f97316, #ea580c)"></div>
+                <span>Arancio</span>
+            </button>
+            <button class="theme-option" data-theme="blue">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #3b82f6, #2563eb)"></div>
+                <span>Blu</span>
+            </button>
+            <button class="theme-option" data-theme="red">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #ef4444, #dc2626)"></div>
+                <span>Rosso</span>
+            </button>
+            <button class="theme-option" data-theme="gold">
+                <div class="theme-preview" style="background: linear-gradient(135deg, #f59e0b, #d97706)"></div>
+                <span>Oro</span>
+            </button>
+        </div>
+    </div>
 
-        const { access_token } = tokenResponse.data;
+    <section class="hero">
+        <h1>KyraBot</h1>
+        <p>Il Bot Discord di Nuova Generazione - Potenza, Eleganza e Intelligenza Artificiale</p>
+        <div class="cta-buttons">
+            <a href="https://discord.gg/uwQFf56hD7" target="_blank" rel="noopener noreferrer" class="cta-button discord">
+                <svg class="discord-icon" viewBox="0 0 71 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M60.1045 4.8978C55.5792 2.8214 50.7265 1.2916 45.6527 0.41542C45.5603 0.39851 45.468 0.440769 45.4204 0.525289C44.7963 1.6353 44.105 3.0834 43.6209 4.2216C38.1637 3.4046 32.7345 3.4046 27.3892 4.2216C26.905 3.0581 26.1886 1.6353 25.5617 0.525289C25.5141 0.443589 25.4218 0.40133 25.3294 0.41542C20.2584 1.2888 15.4057 2.8186 10.8776 4.8978C10.8384 4.9147 10.8048 4.9429 10.7825 4.9795C1.57795 18.7309 -0.943561 32.1443 0.293408 45.3914C0.299005 45.4562 0.335386 45.5182 0.385761 45.5576C6.45866 50.0174 12.3413 52.7249 18.1147 54.5195C18.2071 54.5477 18.305 54.5139 18.3638 54.4378C19.7295 52.5728 20.9469 50.6063 21.9907 48.5383C22.0523 48.4172 21.9935 48.2735 21.8676 48.2256C19.9366 47.4931 18.0979 46.6 16.3292 45.5858C16.1893 45.5041 16.1781 45.304 16.3068 45.2082C16.679 44.9293 17.0513 44.6391 17.4067 44.3461C17.471 44.2926 17.5606 44.2813 17.6362 44.3151C29.2558 49.6202 41.8354 49.6202 53.3179 44.3151C53.3935 44.2785 53.4831 44.2898 53.5502 44.3433C53.9057 44.6363 54.2779 44.9293 54.6529 45.2082C54.7816 45.304 54.7732 45.5041 54.6333 45.5858C52.8646 46.6197 51.0259 47.4931 49.0921 48.2228C48.9662 48.2707 48.9102 48.4172 48.9718 48.5383C50.038 50.6034 51.2554 52.5699 52.5959 54.435C52.6519 54.5139 52.7526 54.5477 52.845 54.5195C58.6464 52.7249 64.529 50.0174 70.6019 45.5576C70.6551 45.5182 70.6887 45.459 70.6943 45.3942C72.1747 30.0791 68.2147 16.7757 60.1968 4.9823C60.1772 4.9429 60.1437 4.9147 60.1045 4.8978ZM23.7259 37.3253C20.2276 37.3253 17.3451 34.1136 17.3451 30.1693C17.3451 26.225 20.1717 23.0133 23.7259 23.0133C27.308 23.0133 30.1626 26.2532 30.1066 30.1693C30.1066 34.1136 27.28 37.3253 23.7259 37.3253ZM47.3178 37.3253C43.8196 37.3253 40.9371 34.1136 40.9371 30.1693C40.9371 26.225 43.7636 23.0133 47.3178 23.0133C50.9 23.0133 53.7545 26.2532 53.6986 30.1693C53.6986 34.1136 50.9 37.3253 47.3178 37.3253Z" fill="currentColor"/>
+                </svg>
+                Unisciti al Server
+            </a>
+            <a href="#features" class="cta-button">Esplora Features</a>
+            <a href="#commands" class="cta-button secondary">Vedi Comandi</a>
+        </div>
+    </section>
 
-        // Ottieni dati utente
-        const userResponse = await axios.get('https://discord.com/api/users/@me', {
-            headers: { Authorization: `Bearer ${access_token}` }
-        });
+    <section class="stats">
+        <div class="stat-card">
+            <div class="stat-number" id="servers">--</div>
+            <div class="stat-label">Server Attivi</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="users">--</div>
+            <div class="stat-label">Utenti Attivi</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="commands">--</div>
+            <div class="stat-label">Comandi</div>
+        </div>
+    </section>
 
-        const userData = userResponse.data;
-        console.log(`🔐 Tentativo login: ${userData.username}#${userData.discriminator}`);
+    <!-- ✅ LINK OAUTH DIRETTO (RIPRISTINATO) -->
+    <section class="dashboard-promo">
+        <div class="dashboard-container">
+            <div class="admin-badge">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/>
+                </svg>
+                AREA AMMINISTRATORI
+            </div>
+            <h2>Dashboard di Controllo</h2>
+            <p>Accedi alla dashboard amministratori per gestire comandi, impostazioni e monitorare il bot in tempo reale. Disponibile solo per staff autorizzato.</p>
+            <a href="https://discord.com/oauth2/authorize?client_id=1452415333515137277&response_type=code&redirect_uri=https%3A%2F%2Fdiscord-bot-bot-discord-kira.up.railway.app%2Fapi%2Fauth%2Fcallback&scope=identify+guilds" class="dashboard-access-btn">
+                <svg class="discord-icon" width="24" height="24" viewBox="0 0 71 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M60.1045 4.8978C55.5792 2.8214 50.7265 1.2916 45.6527 0.41542C45.5603 0.39851 45.468 0.440769 45.4204 0.525289C44.7963 1.6353 44.105 3.0834 43.6209 4.2216C38.1637 3.4046 32.7345 3.4046 27.3892 4.2216C26.905 3.0581 26.1886 1.6353 25.5617 0.525289C25.5141 0.443589 25.4218 0.40133 25.3294 0.41542C20.2584 1.2888 15.4057 2.8186 10.8776 4.8978C10.8384 4.9147 10.8048 4.9429 10.7825 4.9795C1.57795 18.7309 -0.943561 32.1443 0.293408 45.3914C0.299005 45.4562 0.335386 45.5182 0.385761 45.5576C6.45866 50.0174 12.3413 52.7249 18.1147 54.5195C18.2071 54.5477 18.305 54.5139 18.3638 54.4378C19.7295 52.5728 20.9469 50.6063 21.9907 48.5383C22.0523 48.4172 21.9935 48.2735 21.8676 48.2256C19.9366 47.4931 18.0979 46.6 16.3292 45.5858C16.1893 45.5041 16.1781 45.304 16.3068 45.2082C16.679 44.9293 17.0513 44.6391 17.4067 44.3461C17.471 44.2926 17.5606 44.2813 17.6362 44.3151C29.2558 49.6202 41.8354 49.6202 53.3179 44.3151C53.3935 44.2785 53.4831 44.2898 53.5502 44.3433C53.9057 44.6363 54.2779 44.9293 54.6529 45.2082C54.7816 45.304 54.7732 45.5041 54.6333 45.5858C52.8646 46.6197 51.0259 47.4931 49.0921 48.2228C48.9662 48.2707 48.9102 48.4172 48.9718 48.5383C50.038 50.6034 51.2554 52.5699 52.5959 54.435C52.6519 54.5139 52.7526 54.5477 52.845 54.5195C58.6464 52.7249 64.529 50.0174 70.6019 45.5576C70.6551 45.5182 70.6887 45.459 70.6943 45.3942C72.1747 30.0791 68.2147 16.7757 60.1968 4.9823C60.1772 4.9429 60.1437 4.9147 60.1045 4.8978ZM23.7259 37.3253C20.2276 37.3253 17.3451 34.1136 17.3451 30.1693C17.3451 26.225 20.1717 23.0133 23.7259 23.0133C27.308 23.0133 30.1626 26.2532 30.1066 30.1693C30.1066 34.1136 27.28 37.3253 23.7259 37.3253ZM47.3178 37.3253C43.8196 37.3253 40.9371 34.1136 40.9371 30.1693C40.9371 26.225 43.7636 23.0133 47.3178 23.0133C50.9 23.0133 53.7545 26.2532 53.6986 30.1693C53.6986 34.1136 50.9 37.3253 47.3178 37.3253Z" fill="currentColor"/>
+                </svg>
+                Accedi con Discord
+            </a>
+        </div>
+    </section>
 
-        // Verifica se è nel server e ha il ruolo Moderatore
-        const GUILD_ID = process.env.GUILD_ID || '1224070785325596792'; // Metti qui il tuo GUILD_ID
-        const MOD_ROLE_ID = '1224070785325596792';
+    <section class="section" id="features">
+        <h2>✨ Funzionalità Premium</h2>
+        <div class="grid features-grid">
+            <div class="card">
+                <div class="feature-icon">🛡️</div>
+                <div class="feature-title">Moderazione Avanzata</div>
+                <div class="feature-desc">Sistema completo con ban, kick, timeout e gestione warning automatica.</div>
+            </div>
+            <div class="card">
+                <div class="feature-icon">🎤</div>
+                <div class="feature-title">Voice Tracking</div>
+                <div class="feature-desc">Monitora in tempo reale chi è connesso ai canali vocali.</div>
+            </div>
+            <div class="card">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">Analytics Server</div>
+                <div class="feature-desc">Statistiche avanzate e informazioni complete sugli utenti.</div>
+            </div>
+            <div class="card">
+                <div class="feature-icon">🎮</div>
+                <div class="feature-title">Utilità & Fun</div>
+                <div class="feature-desc">Sondaggi interattivi, 8ball magica, avatar viewer e molto altro.</div>
+            </div>
+            <div class="card">
+                <div class="feature-icon">💬</div>
+                <div class="feature-title">Gestione Messaggi</div>
+                <div class="feature-desc">Pulizia bulk, slow mode intelligente e controllo totale.</div>
+            </div>
+            <div class="card">
+                <div class="feature-icon">👋</div>
+                <div class="feature-title">Welcome System</div>
+                <div class="feature-desc">Messaggi automatici personalizzati per nuovi membri.</div>
+            </div>
+        </div>
+    </section>
 
-        try {
-            const guild = await client.guilds.fetch(GUILD_ID);
-            const member = await guild.members.fetch(userData.id);
-            
-            // Controlla se ha il ruolo Moderatore
-            const hasModRole = member.roles.cache.has(MOD_ROLE_ID);
+    <section class="section" id="commands">
+        <h2>📋 Comandi Disponibili</h2>
+        <div class="grid commands-grid">
+            <div class="card"><div class="command-name">/ping</div><div class="command-desc">Controlla la latenza del bot</div></div>
+            <div class="card"><div class="command-name">/help</div><div class="command-desc">Mostra tutti i comandi disponibili</div></div>
+            <div class="card"><div class="command-name">/ban</div><div class="command-desc">Banna un utente dal server</div></div>
+            <div class="card"><div class="command-name">/unban</div><div class="command-desc">Rimuove il ban a un utente</div></div>
+            <div class="card"><div class="command-name">/kick</div><div class="command-desc">Espelle un utente dal server</div></div>
+            <div class="card"><div class="command-name">/timeout</div><div class="command-desc">Mette in timeout un utente</div></div>
+            <div class="card"><div class="command-name">/warn</div><div class="command-desc">Avverte un utente</div></div>
+            <div class="card"><div class="command-name">/warnings</div><div class="command-desc">Visualizza gli avvertimenti</div></div>
+            <div class="card"><div class="command-name">/clear</div><div class="command-desc">Elimina messaggi in bulk</div></div>
+            <div class="card"><div class="command-name">/slowmode</div><div class="command-desc">Imposta la modalità lenta</div></div>
+            <div class="card"><div class="command-name">/poll</div><div class="command-desc">Crea un sondaggio interattivo</div></div>
+            <div class="card"><div class="command-name">/8ball</div><div class="command-desc">Consulta la palla magica</div></div>
+            <div class="card"><div class="command-name">/say</div><div class="command-desc">Fai ripetere un messaggio al bot</div></div>
+            <div class="card"><div class="command-name">/userinfo</div><div class="command-desc">Info dettagliate su un utente</div></div>
+            <div class="card"><div class="command-name">/serverinfo</div><div class="command-desc">Info complete sul server</div></div>
+            <div class="card"><div class="command-name">/avatar</div><div class="command-desc">Mostra l'avatar di un utente</div></div>
+        </div>
+    </section>
 
-            if (!hasModRole) {
-                console.log(`❌ Accesso negato: ${userData.username} non ha il ruolo Moderatore`);
-                return res.status(403).send(`
-                    <!DOCTYPE html>
-                    <html lang="it">
-                    <head>
-                        <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <title>Accesso Negato - KyraBot</title>
-                        <style>
-                            body {
-                                font-family: 'Inter', sans-serif;
-                                background: #0a0118;
-                                color: white;
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
-                                min-height: 100vh;
-                                padding: 2rem;
-                            }
-                            .error-box {
-                                background: rgba(239, 68, 68, 0.1);
-                                border: 2px solid rgba(239, 68, 68, 0.5);
-                                border-radius: 20px;
-                                padding: 3rem;
-                                text-align: center;
-                                max-width: 600px;
-                            }
-                            .icon { font-size: 5rem; margin-bottom: 1.5rem; }
-                            h1 { color: #ef4444; margin-bottom: 1.5rem; font-size: 2.5rem; }
-                            p { font-size: 1.2rem; margin-bottom: 2rem; line-height: 1.6; }
-                            strong { color: #8b5cf6; }
-                            a {
-                                display: inline-block;
-                                background: linear-gradient(135deg, #8b5cf6, #6366f1);
-                                padding: 1.2rem 2.5rem;
-                                border-radius: 50px;
-                                color: white;
-                                text-decoration: none;
-                                font-weight: bold;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="error-box">
-                            <div class="icon">🚫</div>
-                            <h1>Accesso Negato</h1>
-                            <p>Devi avere il ruolo <strong>"Moderatore"</strong> nel server Discord per accedere alla dashboard.</p>
-                            <a href="https://bless3dd.github.io/discord-bot/index.html">← Torna alla Home</a>
-                        </div>
-                    </body>
-                    </html>
-                `);
-            }
+    <footer>
+        <p>🤖 KyraBot - Sviluppato con ❤️ per la gestione perfetta del tuo server Discord</p>
+        <p style="margin-top: 1rem;">© 2026 KyraBot. Tutti i diritti riservati.</p>
+    </footer>
 
-            // Utente autorizzato - crea JWT
-            const JWT_SECRET = process.env.JWT_SECRET || 'chiave-segreta-cambiami';
-            const token = jwt.sign(
-                {
-                    id: userData.id,
-                    username: userData.username,
-                    discriminator: userData.discriminator,
-                    avatar: userData.avatar ? `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png'
-                },
-                JWT_SECRET,
-                { expiresIn: '7d' }
-            );
+    <div class="scroll-top" id="scrollTop">↑</div>
 
-            console.log(`✅ Accesso autorizzato: ${userData.username}#${userData.discriminator}`);
-            res.redirect(`https://bless3dd.github.io/discord-bot/dashboard.html?token=${token}`);
-
-        } catch (guildError) {
-            console.error('❌ Errore verifica ruolo:', guildError.message);
-            return res.status(500).send(`
-                <!DOCTYPE html>
-                <html lang="it">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Errore - KyraBot</title>
-                    <style>
-                        body {
-                            font-family: 'Inter', sans-serif;
-                            background: #0a0118;
-                            color: white;
-                            display: flex;
-                            justify-content: center;
-                            align-items: center;
-                            min-height: 100vh;
-                            padding: 2rem;
-                        }
-                        .error-box {
-                            background: rgba(239, 68, 68, 0.1);
-                            border: 2px solid #ef4444;
-                            border-radius: 20px;
-                            padding: 3rem;
-                            text-align: center;
-                            max-width: 600px;
-                        }
-                        h1 { color: #ef4444; margin-bottom: 1rem; }
-                        p { font-size: 1.1rem; margin-bottom: 2rem; }
-                        code {
-                            background: rgba(0,0,0,0.3);
-                            padding: 0.5rem 1rem;
-                            border-radius: 8px;
-                            display: block;
-                            margin: 1rem 0;
-                            color: #fbbf24;
-                        }
-                        a {
-                            display: inline-block;
-                            background: linear-gradient(135deg, #8b5cf6, #6366f1);
-                            padding: 1rem 2rem;
-                            border-radius: 50px;
-                            color: white;
-                            text-decoration: none;
-                            font-weight: bold;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="error-box">
-                        <h1>❌ Errore</h1>
-                        <p>Non sei nel server Discord o il bot non può verificare il tuo ruolo.</p>
-                        <code>${guildError.message}</code>
-                        <a href="https://bless3dd.github.io/discord-bot/index.html">← Torna alla Home</a>
-                    </div>
-                </body>
-                </html>
-            `);
-        }
-
-    } catch (error) {
-        console.error('❌ Errore OAuth:', error.response?.data || error.message);
-        res.redirect(`https://bless3dd.github.io/discord-bot/index.html?error=auth_failed`);
-    }
-});
+    <script src="./script.js"></script>
+</body>
+</html>
