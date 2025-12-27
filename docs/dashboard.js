@@ -1,5 +1,12 @@
-const API_URL = 'https://discord-bot-bot-discord-kira.up.railway.app';
+// Rileva automaticamente l'URL base dell'API
+const API_BASE = window.location.hostname === 'bless3dd.github.io' 
+    ? 'https://discord-bot-bot-discord-kira.up.railway.app'
+    : '';
+
+const API_URL = `${API_BASE}/api`;
 let userData = null;
+
+console.log('🔧 Dashboard inizializzata con API:', API_URL);
 
 // Tab Switching
 document.querySelectorAll('.tab').forEach(tab => {
@@ -17,6 +24,7 @@ window.onload = () => {
     const urlToken = urlParams.get('token');
     
     if (urlToken) {
+        console.log('✅ Token ricevuto dalla callback OAuth');
         localStorage.setItem('kyrabot_token', urlToken);
         window.history.replaceState({}, document.title, window.location.pathname);
         verifyToken();
@@ -28,6 +36,7 @@ window.onload = () => {
         alert('⚠️ Devi effettuare il login per accedere alla dashboard');
         window.location.href = './index.html';
     } else {
+        console.log('🔑 Token trovato, verifica in corso...');
         verifyToken();
     }
 };
@@ -37,22 +46,29 @@ async function verifyToken() {
     const token = localStorage.getItem('kyrabot_token');
     
     try {
-        const res = await fetch(`${API_URL}/api/auth/verify`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+        console.log('🔄 Verifica token...');
+        const res = await fetch(`${API_URL}/auth/verify`, {
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            },
+            mode: 'cors'
         });
 
         if (res.ok) {
             userData = await res.json();
+            console.log('✅ Utente autenticato:', userData.username);
             document.getElementById('username').textContent = userData.username;
             document.getElementById('userAvatar').src = userData.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png';
             loadDashboardData();
         } else {
+            console.error('❌ Token non valido, status:', res.status);
             localStorage.removeItem('kyrabot_token');
             alert('❌ Sessione scaduta. Effettua nuovamente il login.');
             window.location.href = './index.html';
         }
     } catch (error) {
-        console.error('Errore verifica:', error);
+        console.error('❌ Errore verifica:', error);
         localStorage.removeItem('kyrabot_token');
         window.location.href = './index.html';
     }
@@ -67,15 +83,20 @@ async function loadDashboardData() {
 // Load Stats
 async function loadStats() {
     try {
-        const res = await fetch(`${API_URL}/api/stats`);
+        console.log('📊 Caricamento statistiche...');
+        const res = await fetch(`${API_URL}/stats`, {
+            headers: { 'Accept': 'application/json' },
+            mode: 'cors'
+        });
         const data = await res.json();
         
+        console.log('✅ Statistiche:', data);
         document.getElementById('dashServers').textContent = data.servers || 0;
         document.getElementById('dashUsers').textContent = data.users || 0;
         document.getElementById('dashCommands').textContent = data.commands || 0;
         document.getElementById('dashStatus').textContent = data.online ? 'Online' : 'Offline';
     } catch (error) {
-        console.error('Errore caricamento stats:', error);
+        console.error('❌ Errore caricamento stats:', error);
     }
 }
 
@@ -84,14 +105,20 @@ async function loadCommands() {
     const token = localStorage.getItem('kyrabot_token');
     
     try {
-        const res = await fetch(`${API_URL}/api/commands`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+        console.log('⚙️ Caricamento comandi...');
+        const res = await fetch(`${API_URL}/commands`, {
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            },
+            mode: 'cors'
         });
         
         const commandsData = await res.json();
+        console.log('✅ Comandi caricati:', Object.keys(commandsData).length);
         renderCommands(commandsData);
     } catch (error) {
-        console.error('Errore caricamento comandi:', error);
+        console.error('❌ Errore caricamento comandi:', error);
         document.getElementById('commandsList').innerHTML = '<p class="loading">❌ Errore caricamento comandi</p>';
     }
 }
@@ -133,23 +160,27 @@ async function toggleCommand(cmd, commands) {
     const token = localStorage.getItem('kyrabot_token');
 
     try {
-        const res = await fetch(`${API_URL}/api/commands/${cmd}`, {
+        console.log(`🔄 Toggle comando ${cmd}:`, !isActive);
+        const res = await fetch(`${API_URL}/commands/${cmd}`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
-            body: JSON.stringify({ enabled: !isActive })
+            body: JSON.stringify({ enabled: !isActive }),
+            mode: 'cors'
         });
 
         if (res.ok) {
             toggle.classList.toggle('active');
             commands[cmd].enabled = !isActive;
+            console.log(`✅ Comando ${cmd} ${!isActive ? 'attivato' : 'disattivato'}`);
         } else {
             alert('❌ Errore nell\'aggiornamento del comando');
         }
     } catch (error) {
-        console.error('Errore toggle comando:', error);
+        console.error('❌ Errore toggle comando:', error);
         alert('❌ Errore di connessione');
     }
 }
@@ -162,13 +193,16 @@ document.getElementById('simpleForm').onsubmit = async (e) => {
     const token = localStorage.getItem('kyrabot_token');
 
     try {
-        const res = await fetch(`${API_URL}/api/send-message`, {
+        console.log('📤 Invio messaggio semplice...');
+        const res = await fetch(`${API_URL}/send-message`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
-            body: JSON.stringify({ channelId: channel, message })
+            body: JSON.stringify({ channelId: channel, message }),
+            mode: 'cors'
         });
 
         const data = await res.json();
@@ -176,8 +210,10 @@ document.getElementById('simpleForm').onsubmit = async (e) => {
         
         if (data.success) {
             document.getElementById('simpleMessage').value = '';
+            console.log('✅ Messaggio inviato');
         }
     } catch (error) {
+        console.error('❌ Errore invio messaggio:', error);
         showAlert('simpleAlert', `❌ Errore: ${error.message}`, 'error');
     }
 };
@@ -192,11 +228,13 @@ document.getElementById('embedForm').onsubmit = async (e) => {
     const token = localStorage.getItem('kyrabot_token');
 
     try {
-        const res = await fetch(`${API_URL}/api/send-embed`, {
+        console.log('📤 Invio embed...');
+        const res = await fetch(`${API_URL}/send-embed`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
                 channelId: channel,
@@ -206,7 +244,8 @@ document.getElementById('embedForm').onsubmit = async (e) => {
                     color: parseInt(color.replace('#', ''), 16),
                     timestamp: new Date().toISOString()
                 }
-            })
+            }),
+            mode: 'cors'
         });
 
         const data = await res.json();
@@ -215,8 +254,10 @@ document.getElementById('embedForm').onsubmit = async (e) => {
         if (data.success) {
             document.getElementById('embedTitle').value = '';
             document.getElementById('embedDesc').value = '';
+            console.log('✅ Embed inviato');
         }
     } catch (error) {
+        console.error('❌ Errore invio embed:', error);
         showAlert('embedAlert', `❌ Errore: ${error.message}`, 'error');
     }
 };
@@ -232,6 +273,7 @@ function showAlert(id, message, type) {
 // Logout
 document.getElementById('logoutBtn').onclick = () => {
     if (confirm('Sei sicuro di voler uscire?')) {
+        console.log('👋 Logout...');
         localStorage.removeItem('kyrabot_token');
         window.location.href = './index.html';
     }
