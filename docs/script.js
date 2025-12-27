@@ -1,4 +1,4 @@
-const API_URL = 'https://discord-bot-bot-discord-kira.up.railway.app/api/stats';
+const API_URL = 'https://discord-bot-bot-discord-kira.up.railway.app';
 
 // Theme Switcher
 const themeBtn = document.getElementById('themeBtn');
@@ -31,7 +31,7 @@ async function loadStats() {
     const startTime = performance.now();
     
     try {
-        const res = await fetch(API_URL);
+        const res = await fetch(`${API_URL}/api/stats`);
         const endTime = performance.now();
         const latency = Math.round(endTime - startTime);
         
@@ -49,6 +49,7 @@ async function loadStats() {
         animateNumber('users', data.users || 0);
         animateNumber('commands', data.commands || 0);
     } catch (err) {
+        console.error('Errore caricamento stats:', err);
         document.getElementById('statusText').textContent = 'Offline';
         document.querySelector('.status-dot').style.background = '#ef4444';
         document.getElementById('latencyText').textContent = 'Non disponibile';
