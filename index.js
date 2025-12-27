@@ -15,8 +15,8 @@ const app = express();
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret-key';
 const DISCORD_CLIENT_ID = process.env.CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
-const GUILD_ID = process.env.GUILD_ID || '1219541590620770334'; // ID del tuo server
-const ADMIN_ROLE_ID = process.env.ADMIN_ROLE_ID; // ID del ruolo Moderatore
+const GUILD_ID = process.env.GUILD_ID || '1219541590620770334';
+const ADMIN_ROLE_ID = process.env.ADMIN_ROLE_ID;
 
 // CORS configurato
 app.use(cors({
@@ -37,7 +37,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static('docs')); // ✅ CORRETTO: cartella docs
 
 // ========================================
 // CLIENT DISCORD
@@ -69,8 +69,6 @@ async function hasAdminRole(userId) {
 
         const guild = await client.guilds.fetch(GUILD_ID);
         const member = await guild.members.fetch(userId);
-        
-        // Verifica se ha il ruolo admin
         const hasRole = member.roles.cache.has(ADMIN_ROLE_ID);
         
         console.log(`🔐 Verifica ruolo per ${member.user.tag}: ${hasRole ? '✅' : '❌'}`);
@@ -114,7 +112,7 @@ const verifyAdmin = async (req, res, next) => {
 // ========================================
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'docs', 'index.html')); // ✅ CORRETTO: docs/index.html
 });
 
 app.get('/health', (req, res) => {
@@ -168,23 +166,23 @@ app.get('/api/stats', (req, res) => {
 // API ENDPOINTS AUTH
 // ========================================
 
-app.get('/api/auth/discord', (req, res) => {
-    const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/callback`;
-    const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=identify+guilds.members.read`;
+app.get('/api/auth/login', (req, res) => {
+    const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || `https://discord-bot-bot-discord-kira.up.railway.app/api/auth/callback`;
+    const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT_URI)}&response_type=code&scope=identify+guilds.members.read`;
     res.redirect(authUrl);
 });
 
 app.get('/api/auth/callback', async (req, res) => {
     const { code } = req.query;
+    const FRONTEND_URL = process.env.FRONTEND_URL || 'https://bless3dd.github.io/discord-bot';
 
     if (!code) {
-        return res.redirect('/?error=no_code');
+        return res.redirect(`${FRONTEND_URL}/?error=no_code`);
     }
 
     try {
-        const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/callback`;
+        const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || `https://discord-bot-bot-discord-kira.up.railway.app/api/auth/callback`;
 
-        // Scambia code per access token
         const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
             method: 'POST',
             headers: {
@@ -195,7 +193,7 @@ app.get('/api/auth/callback', async (req, res) => {
                 client_secret: DISCORD_CLIENT_SECRET,
                 grant_type: 'authorization_code',
                 code: code,
-                redirect_uri: redirectUri,
+                redirect_uri: DISCORD_REDIRECT_URI,
                 scope: 'identify guilds.members.read'
             }),
         });
@@ -203,10 +201,9 @@ app.get('/api/auth/callback', async (req, res) => {
         const tokenData = await tokenResponse.json();
 
         if (!tokenData.access_token) {
-            return res.redirect('/?error=no_token');
+            return res.redirect(`${FRONTEND_URL}/?error=no_token`);
         }
 
-        // Ottieni info utente
         const userResponse = await fetch('https://discord.com/api/users/@me', {
             headers: {
                 Authorization: `Bearer ${tokenData.access_token}`,
@@ -215,14 +212,12 @@ app.get('/api/auth/callback', async (req, res) => {
 
         const userData = await userResponse.json();
 
-        // Verifica se ha il ruolo admin
         const hasRole = await hasAdminRole(userData.id);
         
         if (!hasRole) {
-            return res.redirect('/?error=not_admin');
+            return res.redirect(`${FRONTEND_URL}/?error=not_admin`);
         }
 
-        // Crea JWT token
         const jwtToken = jwt.sign(
             {
                 id: userData.id,
@@ -234,15 +229,14 @@ app.get('/api/auth/callback', async (req, res) => {
             { expiresIn: '7d' }
         );
 
-        res.redirect(`/dashboard.html?token=${jwtToken}`);
+        res.redirect(`${FRONTEND_URL}/dashboard.html?token=${jwtToken}`);
     } catch (error) {
         console.error('❌ Errore OAuth:', error);
-        res.redirect('/?error=auth_failed');
+        res.redirect(`${FRONTEND_URL}/?error=auth_failed`);
     }
 });
 
 app.get('/api/auth/verify', verifyToken, async (req, res) => {
-    // Ri-verifica il ruolo ad ogni chiamata
     const hasRole = await hasAdminRole(req.user.id);
     
     if (!hasRole) {
@@ -346,7 +340,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`   → GET  /dashboard.html        (dashboard admin)`);
     console.log(`   → GET  /health                (health check)`);
     console.log(`   → GET  /api/stats             (statistiche bot)`);
-    console.log(`   → GET  /api/auth/discord      (login)`);
+    console.log(`   → GET  /api/auth/login        (login)`);
     console.log(`   → GET  /api/auth/callback     (OAuth callback)`);
     console.log(`   → GET  /api/commands          (lista comandi)`);
     console.log(`   → POST /api/send-message      (invia messaggio)`);
