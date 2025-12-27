@@ -1,7 +1,4 @@
-// Rileva automaticamente l'URL dell'API
-const API_URL = window.location.hostname === 'bless3dd.github.io' 
-    ? 'https://discord-bot-bot-discord-kira.up.railway.app/api/stats'
-    : '/api/stats';
+const API_URL = 'https://discord-bot-bot-discord-kira.up.railway.app/api/stats';
 
 // Theme Switcher
 const themeBtn = document.getElementById('themeBtn');
@@ -34,25 +31,11 @@ async function loadStats() {
     const startTime = performance.now();
     
     try {
-        console.log('🔄 Fetching stats from:', API_URL);
-        
-        const res = await fetch(API_URL, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-            },
-            mode: 'cors'
-        });
-        
+        const res = await fetch(API_URL);
         const endTime = performance.now();
         const latency = Math.round(endTime - startTime);
         
-        if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        
         const data = await res.json();
-        console.log('✅ Stats ricevute:', data);
         
         // Update status
         document.getElementById('statusText').textContent = data.online ? 'Online' : 'Offline';
@@ -66,7 +49,6 @@ async function loadStats() {
         animateNumber('users', data.users || 0);
         animateNumber('commands', data.commands || 0);
     } catch (err) {
-        console.error('❌ Errore caricamento stats:', err);
         document.getElementById('statusText').textContent = 'Offline';
         document.querySelector('.status-dot').style.background = '#ef4444';
         document.getElementById('latencyText').textContent = 'Non disponibile';
@@ -105,8 +87,6 @@ function animateNumber(id, target) {
     }, 30);
 }
 
-// Carica subito le stats
-console.log('🚀 Inizializzazione KyraBot...');
 loadStats();
 setInterval(loadStats, 30000);
 
